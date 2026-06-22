@@ -1,14 +1,20 @@
 <?php
 /**
  * PROJECT: NAVA AI - DATABASE_CONNECTION
- * LOCATION: /config/database.php
+ * تم تعديل المتغيرات لتطابق إعدادات Railway
  */
 
-$host = getenv('DB_HOST') ?: "127.0.0.1";
-$db   = getenv('DB_NAME') ?: "navadb";
-$user = getenv('DB_USER') ?: "navadb";
-$pass = getenv('DB_PASS') ?: "NavaPass123!";
-$port = getenv('DB_PORT') ?: "3306";
+// Railway توفر المتغيرات تلقائياً، نحن نقرأها هنا
+$host = getenv('MYSQLHOST');
+$port = getenv('MYSQLPORT');
+$db   = getenv('MYSQLDATABASE');
+$user = getenv('MYSQLUSER');
+$pass = getenv('MYSQLPASSWORD');
+
+// التأكد من وجود البيانات قبل المحاولة
+if (!$host || !$db || !$user || !$pass) {
+    die("CRITICAL_ERROR: متغيرات قاعدة البيانات غير مضبوطة في بيئة العمل.");
+}
 
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
@@ -19,8 +25,8 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 } catch (PDOException $e) {
+    // تسجيل الخطأ مع إخفاء كلمة المرور والبيانات الحساسة
     error_log("NAVA_DB_FAILURE: " . $e->getMessage());
-    // عرض رسالة خطأ عامة للمستخدم وتسجيل التفاصيل في السجلات
-    die("CRITICAL_ERROR: فشل الاتصال بعقدة البيانات الأساسية. يرجى مراجعة سجلات النظام.");
+    die("CRITICAL_ERROR: فشل الاتصال بقاعدة البيانات.");
 }
 ?>
