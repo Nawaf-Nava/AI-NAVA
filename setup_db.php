@@ -1,94 +1,28 @@
 <?php
-/**
- * NAVA AI - DATABASE_INITIALIZER (Web Interface)
- * يقوم هذا السكربت بإنشاء قاعدة البيانات والجداول المطلوبة للنظام عبر المتصفح.
- */
+require_once 'database.php'; // هذا الملف الذي يحتوي على اتصال PDO الخاص بك
+
+try {
+    $sql = "
+    CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    ";
+    
+    $pdo->exec($sql);
+    echo "تم إنشاء الجداول بنجاح!";
+} catch (PDOException $e) {
+    die("خطأ أثناء إنشاء الجداول: " . $e->getMessage());
+}
 ?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NAVA AI - Database Setup</title>
-    <link rel="icon" type="image/png" href="images/ooo.png">
-    <link rel="stylesheet" href="assets/vendor/fonts/bunny-fonts.css">
-    <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            font-family: 'IBM Plex Sans Arabic', monospace;
-            line-height: 1.7;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 30px;
-            width: 100%;
-            max-width: 800px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-        h1 {
-            color: #00f3ff;
-            text-align: center;
-            margin-bottom: 25px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            letter-spacing: 2px;
-        }
-        pre {
-            background-color: #010409;
-            padding: 20px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 0.9rem;
-            border: 1px solid #222;
-        }
-        .success { color: #00ff88; }
-        .error { color: #ff3366; }
-        .warning { color: #ffcc00; margin-top: 20px; text-align: center; font-size: 0.8rem; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>NAVA AI DB SETUP</h1>
-        <pre><?php
-            ob_start(); // Start output buffering
-
-            require_once 'config/database.php';
-
-            try {
-                // 1. إنشاء جدول المستخدمين
-                $sql_users = "CREATE TABLE IF NOT EXISTS users ( user_id VARCHAR(20) PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, bio TEXT, profile_pic VARCHAR(255) DEFAULT 'default-avatar.png', access_level ENUM('ROOT', 'USER') DEFAULT 'USER', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                $pdo->exec($sql_users);
-                echo "<span class='success'>[+] Table 'users' created or already exists.</span>\n";
-
-                // 2. إنشاء جدول الجلسات (Sessions)
-                $sql_sessions = "CREATE TABLE IF NOT EXISTS sessions ( session_uuid VARCHAR(100) PRIMARY KEY, user_id VARCHAR(20), title VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                $pdo->exec($sql_sessions);
-                echo "<span class='success'>[+] Table 'sessions' created or already exists.</span>\n";
-
-                // 3. إنشاء جدول الرسائل (Messages)
-                $sql_messages = "CREATE TABLE IF NOT EXISTS messages ( id INT AUTO_INCREMENT PRIMARY KEY, session_uuid VARCHAR(100), role ENUM('user', 'model') NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (session_uuid) REFERENCES sessions(session_uuid) ON DELETE CASCADE ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                $pdo->exec($sql_messages);
-                echo "<span class='success'>[+] Table 'messages' created or already exists.</span>\n";
-
-                echo "\n<span class='success'>[SUCCESS] قاعدة البيانات جاهزة للعمل بنسبة 100%.</span>\n";
-                echo "يمكنك الآن البدء بالتسجيل عبر register.php\n";
-
-            } catch (PDOException $e) {
-                echo "\n<span class='error'>[ERROR] فشل إعداد قاعدة البيانات: " . htmlspecialchars($e->getMessage()) . "</span>\n";
-                echo "تأكد من صحة إعدادات الاتصال في 'config/database.php' (للتطوير المحلي) أو متغيرات البيئة (للاستضافة).\n";
-            }
-            ob_end_flush(); // End buffering and output everything
-        ?></pre>
-        <p class="warning">⚠️ تحذير أمني: يرجى حذف هذا الملف (`setup_db.php`) من الخادم فور الانتهاء من الإعداد.</p>
-    </div>
-</body>
-</html>
-
