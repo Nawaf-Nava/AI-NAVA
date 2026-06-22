@@ -32,5 +32,17 @@ if (extension_loaded('pdo_mysql')) {
     echo "<p style='color:red;'>❌ إضافة MySQL: غير مفعلة في السيرفر</p>";
 }
 
+if (extension_loaded('curl')) {
+    echo "<p style='color:green;'>✅ إضافة cURL: مفعلة (ضرورية لـ API)</p>";
+} else {
+    echo "<p style='color:red;'>❌ إضافة cURL: غير مفعلة في السيرفر</p>";
+}
+
+if (function_exists('shell_exec')) {
+    echo "<p style='color:green;'>✅ دالة shell_exec: مفعلة (ضرورية للوضع العميق)</p>";
+} else {
+    echo "<p style='color:red;'>❌ دالة shell_exec: معطلة في إعدادات PHP (php.ini)</p>";
+}
+
 echo "<hr><p>بعد إصلاح الأخطاء أعلاه، قم بحذف هذا الملف للأمان.</p>";
 ?>
