@@ -1,6 +1,0 @@
-# ملف إعدادات البناء لمنصة Railway
-# https://nixpacks.com/docs/providers/php
-
-[variables]
-# نخبر Railway بتثبيت الإضافات الضرورية لـ PHP لتشغيل المشروع
-NIX_PACKS_PHP_EXTENSIONS = "pdo_mysql,curl,mbstring,gd"
