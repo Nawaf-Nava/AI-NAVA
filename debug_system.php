@@ -8,7 +8,7 @@ echo "<h2>فحص أنظمة NAVA AI...</h2>";
 
 // 1. فحص قاعدة البيانات
 try {
-    require_once 'config/database.php';
+   require_once 'config/database.php';
     echo "<p style='color:green;'>✅ الاتصال بقاعدة البيانات: سليم</p>";
 } catch (Exception $e) {
     echo "<p style='color:red;'>❌ فشل الاتصال بقاعدة البيانات: " . $e->getMessage() . "</p>";
