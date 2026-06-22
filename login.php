@@ -2,6 +2,7 @@
 /**
  * PROJECT: NAVA AI / CyberFlux v9.5 - DATABASE_CORE
  * MODULE: User Authentication (Login & Sync)
+ * DATABASE: PostgreSQL
  * ENGINEER: NAWAF_ROOT
  */
 
@@ -30,29 +31,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
     
     try {
-        // [1] البحث عن المستخدم
+        // [1] البحث عن المستخدم في PostgreSQL
         $stmt = $pdo->prepare("SELECT * FROM users WHERE LOWER(username) = LOWER(?)");
         $stmt->execute([$username]);
         $target_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$target_user) {
-            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة."; // رسالة خطأ عامة لمنع تعداد أسماء المستخدمين
+            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.";
         } 
         // [2] التحقق من كلمة المرور
         elseif (!password_verify($password, $target_user['password_hash'])) {
-            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة."; // رسالة خطأ عامة لمنع تعداد أسماء المستخدمين
+            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.";
         } 
         else {
             // النجاح
             session_regenerate_id(true);
             
-            // [3] صيانة المجلدات: التأكد من وجود مسارات التخزين للحسابات المنتقلة لـ PostgreSQL
-            // تغيير الصلاحيات من 0777 إلى 0755
+            // [3] صيانة المجلدات: التأكد من وجود مسارات التخزين
             $default_dir_permissions = 0755;
             $upload_dir = __DIR__ . '/images/uploads/';
 
             if (!is_dir($upload_dir)) mkdir($upload_dir, $default_dir_permissions, true);
-            // [4] تعيين بيانات الجلسة مباشرة من قاعدة البيانات
+            
+            // [4] تعيين بيانات الجلسة مباشرة من PostgreSQL
             $user_pic = !empty($target_user['profile_pic']) ? $target_user['profile_pic'] : 'default-avatar.png';
 
             $_SESSION['user_id']     = $target_user['user_id'];
@@ -66,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } catch (PDOException $e) {
         // خطأ تقني في قاعدة البيانات
-        $error = "خطأ تقني في قاعدة البيانات: " . $e->getMessage();
+        error_log("LOGIN_DATABASE_ERROR: " . $e->getMessage());
+        $error = "خطأ تقني في قاعدة البيانات. راجع السجلات لمعرفة السبب.";
     }
 }
 ?>
