@@ -1,16 +1,11 @@
 # ملف إعدادات البناء لمنصة Railway
 # https://nixpacks.com/docs/providers/php
 
-[phases.setup]
-# تحديد إصدار PHP والحزم المطلوبة بشكل صريح لضمان التوافق
-nixPkgs = [
-    "pkgs.php82",
-    "pkgs.php82Packages.composer",
-    "pkgs.php82Packages.pdo_mysql",
-    "pkgs.php82Packages.curl",
-    "pkgs.php82Packages.mbstring",
-    "pkgs.php82Packages.gd"
-]
+[variables]
+# فرض استخدام إصدار PHP 8.2 المستقر
+PHP_VERSION = "8.2"
+# إخبار Nixpacks بتثبيت الإضافات الضرورية لهذا الإصدار
+NIX_PACKS_PHP_EXTENSIONS = "pdo_mysql,curl,mbstring,gd"
 
 [start]
 # أمر بدء التشغيل القياسي لخادم PHP على Railway
