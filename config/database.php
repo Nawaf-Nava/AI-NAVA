@@ -1,32 +1,34 @@
 <?php
 /**
  * PROJECT: NAVA AI - DATABASE_CONNECTION
- * تم تعديل المتغيرات لتطابق إعدادات Railway
+ * تم تحديث الكود للعمل مع Railway Environment Variables
  */
 
-// Railway توفر المتغيرات تلقائياً، نحن نقرأها هنا
+// جلب المتغيرات من بيئة العمل في Railway
 $host = getenv('MYSQLHOST');
 $port = getenv('MYSQLPORT');
 $db   = getenv('MYSQLDATABASE');
 $user = getenv('MYSQLUSER');
 $pass = getenv('MYSQLPASSWORD');
 
-// التأكد من وجود البيانات قبل المحاولة
-if (!$host || !$db || !$user || !$pass) {
-    die("CRITICAL_ERROR: متغيرات قاعدة البيانات غير مضبوطة في بيئة العمل.");
+// التحقق من وجود كافة المتغيرات المطلوبة
+if (!$host || !$db || !$user || !$pass || !$port) {
+    die("CRITICAL_ERROR: متغيرات قاعدة البيانات غير مضبوطة بشكل صحيح في Railway.");
 }
 
+// إعداد سلسلة الاتصال (DSN)
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
+    // إنشاء اتصال PDO
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 } catch (PDOException $e) {
-    // تسجيل الخطأ مع إخفاء كلمة المرور والبيانات الحساسة
+    // تسجيل الخطأ في سجلات Railway (Logs) دون كشف البيانات الحساسة للمستخدم
     error_log("NAVA_DB_FAILURE: " . $e->getMessage());
-    die("CRITICAL_ERROR: فشل الاتصال بقاعدة البيانات.");
+    die("CRITICAL_ERROR: فشل الاتصال بقاعدة البيانات. تأكد من إعدادات المتغيرات في Railway.");
 }
 ?>
