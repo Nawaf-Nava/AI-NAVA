@@ -1,18 +1,18 @@
 <?php
 /**
  * PROJECT: NAVA AI - DYNAMIC DATABASE CONNECTION
- * هذا الملف مهيأ للعمل ديناميكياً مع استضافة Railway وبيئة التطوير المحلية.
+ * جاهز للعمل بنسبة 100% على استضافة Railway
  */
 
-// --- [ Dynamic Environment Configuration ] ---
-// يقرأ متغيرات Railway، وفي حال عدم وجودها، يعود للإعدادات المحلية الافتراضية.
-$host = getenv('MYSQLHOST') ?: '127.0.0.1';      // استبدل '127.0.0.1' إذا كان خادمك المحلي مختلفاً
-$port = getenv('MYSQLPORT') ?: '3306';           // المنفذ الافتراضي لـ MySQL
-$dbname = getenv('MYSQLDATABASE') ?: 'navadb';   // اسم قاعدة بياناتك المحلية
-$user = getenv('MYSQLUSER') ?: 'root';           // اسم مستخدم قاعدة بياناتك المحلية
-$pass = getenv('MYSQLPASSWORD') ?: '';           // كلمة مرور قاعدة بياناتك المحلية (اتركها فارغة إذا لم تكن موجودة)
+// --- [ إعدادات الاتصال ] ---
+// الكود سيحاول قراءة المتغيرات من الاستضافة أولاً، وإذا لم يجدها سيستخدم بياناتك المباشرة
+$host = getenv('MYSQLHOST')     ?: 'mysql'; // 'mysql' هو الهوست الداخلي الافتراضي في Railway
+$port = getenv('MYSQLPORT')     ?: '3306';
+$dbname = getenv('MYSQLDATABASE') ?: 'railway'; // اسم قاعدة بياناتك في Railway
+$user = getenv('MYSQLUSER')     ?: 'root';
+$pass = getenv('MYSQLPASSWORD') ?: 'WTELrleofnbQdyuSTxYqgcwSJJHKlZLS'; // كلمة المرور الخاصة بك
  
-// --- [ PDO Connection Setup ] ---
+// --- [ بناء الاتصال بـ PDO ] ---
 $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
  
 $options = [
@@ -22,13 +22,17 @@ $options = [
 ];
  
 try {
-    // إنشاء اتصال PDO
+    // إنشاء الاتصال
     $pdo = new PDO($dsn, $user, $pass, $options);
+    
+    // (اختياري): يمكنك إزالة الشرطتين (//) من السطر القادم لاختبار نجاح الاتصال عند فتح الموقع
+    // echo "NAVA AI: تم الاتصال بقاعدة البيانات بنجاح!"; 
+    
 } catch (PDOException $e) {
-    // في بيئة الإنتاج (مثل Railway)، سيتم تسجيل الخطأ فقط.
+    // تسجيل الخطأ في سجلات السيرفر (Logs)
     error_log("NAVA_DB_FAILURE: " . $e->getMessage());
-    // إيقاف التنفيذ مع رسالة عامة وآمنة.
-    // استخدام throw يجعله متوافقاً مع ملف debug_system.php
-    throw new PDOException("CRITICAL: فشل الاتصال بنواة قاعدة البيانات.", (int)$e->getCode());
+    
+    // إيقاف التنفيذ وإظهار رسالة للمستخدم
+    die("CRITICAL_ERROR: فشل الاتصال بنواة قاعدة البيانات. يرجى مراجعة سجلات النظام.");
 }
 ?>
