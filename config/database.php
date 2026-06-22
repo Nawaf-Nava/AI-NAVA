@@ -6,11 +6,11 @@
 
 // --- [ إعدادات الاتصال ] ---
 // الكود سيحاول قراءة المتغيرات من الاستضافة أولاً، وإذا لم يجدها سيستخدم بياناتك المباشرة
-$host = getenv('MYSQLHOST')     ?: 'mysql'; // 'mysql' هو الهوست الداخلي الافتراضي في Railway
+$host = getenv('MYSQLHOST')     ?: 'mysql.railway.internal'; // 'mysql' هو الهوست الداخلي الافتراضي في Railway
 $port = getenv('MYSQLPORT')     ?: '3306';
-$dbname = getenv('MYSQLDATABASE') ?: 'railway'; // اسم قاعدة بياناتك في Railway
+$dbname = getenv('MYSQLDATABASE') ?: 'NAVADB'; // اسم قاعدة بياناتك في Railway
 $user = getenv('MYSQLUSER')     ?: 'root';
-$pass = getenv('MYSQLPASSWORD') ?: 'WTELrleofnbQdyuSTxYqgcwSJJHKlZLS'; // كلمة المرور الخاصة بك
+$pass = getenv('MYSQLPASSWORD') ?: '69y87fuworf'; // كلمة المرور الخاصة بك
  
 // --- [ بناء الاتصال بـ PDO ] ---
 $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
