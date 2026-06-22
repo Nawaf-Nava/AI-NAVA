@@ -1,6 +1,7 @@
 <?php
 /* ========================================================================
    PROJECT: NAVA AI / CyberFlux v9.5 - REGISTRATION_CORE (STABILIZED v2)
+   DATABASE: PostgreSQL
    ENGINEER: NAWAF_ROOT (Cybersecurity Specialist)
    STATUS: FIXED BUG #48 | PATHINFO STRING TYPECASTED | VAULT INTERNAL
    ======================================================================== */
@@ -8,8 +9,6 @@
 ini_set('session.cookie_lifetime', 2592000);
 ini_set('session.gc_maxlifetime', 2592000);
 session_start();
-// يجب إزالة هذا السطر في بيئة الإنتاج
-// ini_set('display_errors', 1); 
 error_reporting(E_ALL);
 
 require_once 'config/database.php';
@@ -25,97 +24,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 1. تحديد مسارات تخزين الملحقات (الصور والمحادثات) فقط
     $upload_dir = __DIR__ . '/images/uploads/';
     
-    if (!is_dir($upload_dir) && !mkdir($upload_dir, 0755, true)) { // تغيير الصلاحيات من 0777 إلى 0755
-        if (empty($msg)) { // لا نستبدل رسالة خطأ سابقة إذا كانت موجودة
+    if (!is_dir($upload_dir) && !mkdir($upload_dir, 0755, true)) {
+        if (empty($msg)) {
             $msg = "CRITICAL_ERROR: فشل في إنشاء مجلد رفع الملفات. تحقق من الصلاحيات.";
         }
     }
     $profile_pic = "default-avatar.png"; 
 
-    // 2. التحقق من تكرار اسم المستخدم في قاعدة بيانات MySQL
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(username) = LOWER(?)");
-    $stmt->execute([$username]);
-    $user_exists = $stmt->fetchColumn() > 0;
+    // 2. التحقق من تكرار اسم المستخدم في PostgreSQL
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(username) = LOWER(?)");
+        $stmt->execute([$username]);
+        $user_exists = $stmt->fetchColumn() > 0;
 
-    if ($user_exists) {
-        $msg = "خطأ: اسم المستخدم مسجل مسبقاً في قاعدة البيانات.";
-    } else {
-        // 3. توليد معرف مستخدم فريد والتحقق من عدم وجوده في MySQL لمنع التضارب
-        do {
-            $user_id = strval(rand(1000000000, 1999999999));
-            $check_id = $pdo->prepare("SELECT COUNT(*) FROM users WHERE user_id = ?");
-            $check_id->execute([$user_id]);
-            $id_exists = $check_id->fetchColumn() > 0;
-        } while ($id_exists);
-        
-        // 4. معالجة رفع الصورة الشخصية (إصلاح الخطأ الحاصل في السطر 48)
-        if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
-            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime_type = finfo_file($finfo, $_FILES['profile_pic']['tmp_name']);
-            finfo_close($finfo);
+        if ($user_exists) {
+            $msg = "خطأ: اسم المستخدم مسجل مسبقاً في قاعدة البيانات.";
+        } else {
+            // 3. توليد معرف مستخدم فريد والتحقق من عدم وجوده في PostgreSQL لمنع التضارب
+            do {
+                $user_id = strval(rand(1000000000, 1999999999));
+                $check_id = $pdo->prepare("SELECT COUNT(*) FROM users WHERE user_id = ?");
+                $check_id->execute([$user_id]);
+                $id_exists = $check_id->fetchColumn() > 0;
+            } while ($id_exists);
             
-            // التأكد من جلب الاسم كسلسلة نصية نقية لتجنب TypeError
-            $raw_filename = $_FILES['profile_pic']['name'];
-            $filename = is_array($raw_filename) ? $raw_filename[0] : $raw_filename;
-            
-            $ext = strtolower(pathinfo((string)$filename, PATHINFO_EXTENSION));
+            // 4. معالجة رفع الصورة الشخصية
+            if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
+                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime_type = finfo_file($finfo, $_FILES['profile_pic']['tmp_name']);
+                finfo_close($finfo);
+                
+                // التأكد من جلب الاسم كسلسلة نصية نقية
+                $raw_filename = $_FILES['profile_pic']['name'];
+                $filename = is_array($raw_filename) ? $raw_filename[0] : $raw_filename;
+                
+                $ext = strtolower(pathinfo((string)$filename, PATHINFO_EXTENSION));
 
-            // تحقق إضافي من نوع MIME الفعلي للملف
-            if (!in_array($mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
-                $msg = "خطأ: نوع الملف غير مدعوم أو غير صالح.";
-            }
+                // تحقق إضافي من نوع MIME الفعلي للملف
+                if (!in_array($mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+                    $msg = "خطأ: نوع الملف غير مدعوم أو غير صالح.";
+                }
 
-            if (in_array($ext, $allowed)) {
-                // الهيكلة الإجبارية للاسم لتطابق فحص الـ glob في index.php
-                $new_name = "user_" . $user_id . "_" . bin2hex(random_bytes(4)) . "." . $ext;
-                if (!is_writable($upload_dir)) { $msg = "CRITICAL_ERROR: مجلد الرفع غير قابل للكتابة."; }
-                else if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_dir . $new_name)) {
-                    $profile_pic = $new_name; 
+                if (in_array($ext, $allowed)) {
+                    // الهيكلة الإجبارية للاسم
+                    $new_name = "user_" . $user_id . "_" . bin2hex(random_bytes(4)) . "." . $ext;
+                    if (!is_writable($upload_dir)) { 
+                        $msg = "CRITICAL_ERROR: مجلد الرفع غير قابل للكتابة."; 
+                    }
+                    else if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_dir . $new_name)) {
+                        $profile_pic = $new_name; 
+                    }
                 }
             }
+
+            // التحقق إذا كان هذا أول مستخدم (تعيين ROOT تلقائياً)
+            $countStmt = $pdo->query("SELECT COUNT(*) FROM users");
+            $access_level = ($countStmt->fetchColumn() == 0) ? 'ROOT' : 'USER';
+
+            // 5. إدخال البيانات في PostgreSQL
+            $sql = "INSERT INTO users (user_id, username, password_hash, bio, profile_pic, access_level) 
+                    VALUES (:uid, :uname, :pass, :bio, :pic, :lvl)";
+            try {
+                $stmt = $pdo->prepare($sql);
+                $result = $stmt->execute([
+                    ':uid'   => $user_id,
+                    ':uname' => $username,
+                    ':pass'  => password_hash($password, PASSWORD_BCRYPT),
+                    ':bio'   => $bio,
+                    ':pic'   => $profile_pic,
+                    ':lvl'   => $access_level
+                ]);
+            } catch (PDOException $e) {
+                error_log("REGISTER_DATABASE_ERROR: " . $e->getMessage());
+                $msg = "DATABASE_INSERT_ERROR: فشل في إدخال البيانات. راجع السجلات.";
+                $result = false;
+            }
+
+            if ($result) {
+                session_regenerate_id(true);
+                // تفعيل الجلسة الآمنة تلقائياً للمستخدم الموثق
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['username'] = $username;
+                $_SESSION['role'] = $access_level;
+                $_SESSION['bio'] = $bio;
+                $_SESSION['profile_pic'] = $profile_pic;
+
+                $success_msg = "تمت مزامنة العقدة وإنشاء ملف الهوية بنجاح! جاري الانتقال للوحة التحكم...";
+                
+                // التأكد من إرسال الـ Headers قبل أي مخرجات
+                echo "<script>window.location.href = 'index.php?msg=" . urlencode($success_msg) . "&type=success';</script>";
+                exit();
+            } else {
+                echo "<script>window.location.href = 'index.php?msg=" . urlencode($msg) . "&type=error';</script>";
+                exit();
+            }
         }
-
-        // Check if this is the first user to assign ROOT automatically
-        $countStmt = $pdo->query("SELECT COUNT(*) FROM users");
-        $access_level = ($countStmt->fetchColumn() == 0) ? 'ROOT' : 'USER';
-
-        // 5. إدخال البيانات في MySQL
-        $sql = "INSERT INTO users (user_id, username, password_hash, bio, profile_pic, access_level) 
-                VALUES (:uid, :uname, :pass, :bio, :pic, :lvl)";
-        try {
-            $stmt = $pdo->prepare($sql);
-            $result = $stmt->execute([
-                ':uid'   => $user_id,
-                ':uname' => $username,
-                ':pass'  => password_hash($password, PASSWORD_BCRYPT),
-                ':bio'   => $bio,
-                ':pic'   => $profile_pic,
-                ':lvl'   => $access_level
-            ]);
-        } catch (PDOException $e) {
-            $msg = "DATABASE_INSERT_ERROR: " . $e->getMessage();
-            $result = false;
-        }
-
-        if ($result) {
-            session_regenerate_id(true); // منع تثبيت الجلسة
-            // تفعيل الجلسة الآمنة تلقائياً للمستخدم الموثق
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['username'] = $username;
-            $_SESSION['role'] = $access_level;
-            $_SESSION['bio'] = $bio;
-            $_SESSION['profile_pic'] = $profile_pic;
-
-            $success_msg = "تمت مزامنة العقدة وإنشاء ملف الهوية بنجاح! جاري الانتقال للوحة التحكم...";
-            
-            // التأكد من إرسال الـ Headers قبل أي مخرجات
-            echo "<script>window.location.href = 'index.php?msg=" . urlencode($success_msg) . "&type=success';</script>";
-            exit();
-        } else {
-            echo "<script>window.location.href = 'index.php?msg=" . urlencode($msg) . "&type=error';</script>";
-            exit();
-        }
+    } catch (PDOException $e) {
+        error_log("REGISTER_DB_OPERATION_ERROR: " . $e->getMessage());
+        $msg = "خطأ في قاعدة البيانات. يرجى المحاولة لاحقاً.";
     }
 }
 ?>
@@ -168,8 +175,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: 0.3s; border-radius: var(--radius-sm); font-family: var(--font-main);
         }
         .btn-submit:hover { box-shadow: 0 0 20px var(--cyber-cyan); background: #fff; }
-        .error-msg { background: rgba(255, 51, 102, 0.1); border: 1px solid var(--neon-red); color: var(--neon-red); padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
-        .success-msg { background: rgba(0, 255, 136, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
+        .error-msg { background: rgba(255, 51, 102, 0.1); border: 1px solid var(--neon-red); color: var(--neon-red); padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-size: 0.85rem; }
+        .success-msg { background: rgba(0, 255, 136, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
