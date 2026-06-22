@@ -1,18 +1,23 @@
 <?php
 /**
  * PROJECT: NAVA AI - DYNAMIC DATABASE CONNECTION
- * جاهز للعمل بنسبة 100% على استضافة Railway
+ * تعديل لضمان الاتصال المباشر عبر Railway
  */
 
-// --- [ إعدادات الاتصال ] ---
-// الكود سيحاول قراءة المتغيرات من الاستضافة أولاً، وإذا لم يجدها سيستخدم بياناتك المباشرة
-$host = getenv('MYSQLHOST')     ?: 'mysql.railway.internal'; // 'mysql' هو الهوست الداخلي الافتراضي في Railway
-$port = getenv('MYSQLPORT')     ?: '3306';
-$dbname = getenv('MYSQLDATABASE') ?: 'NAVADB'; // اسم قاعدة بياناتك في Railway
-$user = getenv('MYSQLUSER')     ?: 'root';
-$pass = getenv('MYSQLPASSWORD') ?: '69y87fuworf'; // كلمة المرور الخاصة بك
- 
-// --- [ بناء الاتصال بـ PDO ] ---
+// 1. سحب المتغيرات (Railway تقوم بحقنها تلقائياً)
+$host   = getenv('MYSQLHOST');
+$port   = getenv('MYSQLPORT');
+$dbname = getenv('MYSQLDATABASE');
+$user   = getenv('MYSQLUSER');
+$pass   = getenv('MYSQLPASSWORD');
+
+// 2. التحقق من وجود القيم (في حال فشل السحب)
+// إذا كانت هذه القيم فارغة، فهذا يعني أنك لست في بيئة Railway، 
+// أو أن خدمة MySQL غير مربوطة بخدمة الموقع.
+if (!$host || !$dbname || !$user) {
+    die("CRITICAL_ERROR: متغيرات قاعدة البيانات غير موجودة. تأكد من ربط خدمة MySQL بـ AI-NAVA في لوحة التحكم.");
+}
+
 $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
  
 $options = [
@@ -22,17 +27,10 @@ $options = [
 ];
  
 try {
-    // إنشاء الاتصال
     $pdo = new PDO($dsn, $user, $pass, $options);
-    
-    // (اختياري): يمكنك إزالة الشرطتين (//) من السطر القادم لاختبار نجاح الاتصال عند فتح الموقع
-    // echo "NAVA AI: تم الاتصال بقاعدة البيانات بنجاح!"; 
-    
 } catch (PDOException $e) {
-    // تسجيل الخطأ في سجلات السيرفر (Logs)
+    // تسجيل الخطأ بدقة
     error_log("NAVA_DB_FAILURE: " . $e->getMessage());
-    
-    // إيقاف التنفيذ وإظهار رسالة للمستخدم
-    die("CRITICAL_ERROR: فشل الاتصال بنواة قاعدة البيانات. يرجى مراجعة سجلات النظام.");
+    die("CRITICAL_ERROR: فشل الاتصال بقاعدة البيانات. تأكد من إعدادات الربط في Railway.");
 }
 ?>
