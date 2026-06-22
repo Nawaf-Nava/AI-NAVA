@@ -1,16 +1,25 @@
-
 <?php
-// سحب المتغيرات من Railway
-$host   = getenv('MYSQLHOST');
-$port   = getenv('MYSQLPORT');
-$dbname = getenv('MYSQLDATABASE');
-$user   = getenv('MYSQLUSER');
-$pass   = getenv('MYSQLPASSWORD');
+/**
+ * PROJECT: NAVA AI - PostgreSQL Connection
+ */
 
-// بناء رابط الاتصال
-$dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+// سحب المتغيرات تماماً كما هي مكتوبة في لوحة تحكم Railway الخاصة بك
+$host   = getenv('PGHOST');
+$dbname = getenv('PGDATABASE');
+$user   = getenv('POSTGRES_USER');
+$pass   = getenv('POSTGRES_PASSWORD');
 
-// إعدادات الاتصال (تم حذف السطر المسبب للخطأ)
+// المنفذ الافتراضي لـ PostgreSQL هو 5432 (أضفته كقيمة احتياطية لأنه لم يظهر في الصورة)
+$port   = getenv('PGPORT') ?: '5432';
+
+// التحقق من وصول المتغيرات لتجنب الأخطاء
+if (!$host || !$dbname || !$user) {
+    die("CRITICAL_ERROR: بيانات الاتصال غير مكتملة. تأكد من تحميل المتغيرات بشكل صحيح.");
+}
+
+// بناء رابط الاتصال (لاحظ استخدام pgsql بدلاً من mysql)
+$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
+
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -20,9 +29,12 @@ $options = [
 try {
     // إنشاء الاتصال
     $pdo = new PDO($dsn, $user, $pass, $options);
+    
+    // (اختياري) أزل الشرطتين في السطر التالي لاختبار نجاح الاتصال
+    // echo "تم الاتصال بقاعدة بيانات PostgreSQL بنجاح!";
+    
 } catch (PDOException $e) {
-    // تسجيل الخطأ وإيقاف التنفيذ
     error_log("DATABASE_ERROR: " . $e->getMessage());
-    die("خطأ في الاتصال بقاعدة البيانات. راجع سجلات النظام.");
+    die("فشل الاتصال بقاعدة البيانات. راجع سجلات النظام لمعرفة السبب.");
 }
 ?>
