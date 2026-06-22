@@ -1,0 +1,8 @@
+requests
+beautifulsoup4
+scapy
+python-nmap
+dnspython
+pycryptodome
+shodan
+matplotlib

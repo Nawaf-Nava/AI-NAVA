@@ -1,0 +1,2267 @@
+/* ========================================================================
+   PROJECT: NAVA AI / CyberFlux v9.5 - المساعد السيبراني المستقل
+   ENGINEER: NAWAF_ROOT (Cybersecurity Specialist)
+   STATUS: CORE_ENGINE_MODIFIED | STABILIZED
+   VERSION: 9.5.2 (UI Optimized)
+   ======================================================================== */
+
+/* [1] مصفوفة المتغيرات الرئيسية المدمجة (Unified Root Variables) 
+   -------------------------------------------------------- */
+:root {
+    --cyber-cyan: #00f3ff;
+    --bg-dark: #000000;
+    --text-main: #ffffff;
+    --neon-glow: 0 0 10px rgba(0, 243, 255, 0.5);
+    --sidebar-width: 320px;
+    --border-color: rgba(0, 243, 255, 0.2);
+    --transition-speed: 0.4s;
+    --void-bg: #000000; /* الأسود العميق لكل الأوضاع */
+    --panel-bg: transparent;
+    --panel-glass: rgba(10, 15, 20, 0.85);
+    --input-bg: #0d1218;
+    --chat-bubble-user: rgba(0, 242, 255, 0.08);
+    --chat-bubble-bot: rgba(15, 20, 25, 0.7);
+    --chat-bubble-bot: rgba(10, 15, 20, 0.6);
+    --border-glow: 0 0 15px rgba(0, 242, 255, 0.2);
+    --font-size-chat: 1.05rem;
+    --cyan-glow: #00f3ff;
+    --cyan-dim: #003a45;
+    --cyan-transparent: rgba(0, 242, 255, 0.1);
+    --cyan-heavy: rgba(0, 242, 255, 0.4);
+    --neon-green: #00ff88;
+    --neon-red: #ff3366;
+    --neon-gold: #ffcc00;
+    --neon-purple: #9d00ff;
+    --text-primary: #e0faff;
+    --text-secondary: #88a0a8;
+    --text-muted: #566b72;
+    --code-bg: #0d0d0d;
+    --code-header: #161b22;
+    --code-border: #30363d;
+    --code-text: #c9d1d9;
+    --code-keyword: #ff7b72;
+    --code-string: #a5d6ff;
+    --code-comment: #8b949e;
+    --font-main: 'IBM Plex Sans Arabic', sans-serif;
+    --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --radius-lg: 0px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --blur-val: 0px; /* تم إلغاء التشويش نهائياً لرؤية حادة */
+    --bubble-shadow: rgba(0, 243, 255, 0.1);
+    --shadow-main: 0 10px 40px rgba(0,0,0,0.6);
+    --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none !important;
+}
+
+html, body {
+    width: 100% !important;
+    height: 100dvh;
+    background-color: var(--void-bg);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-weight: 400;
+    line-height: 1.7;
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    user-select: none;
+    /* تحفيز كرت الشاشة لتقليل الحرارة */
+    transform: translateZ(0);
+}
+
+.conversation-zone, .msg-content, code, pre {
+    user-select: text;
+}
+
+.space-engine {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: #000000; /* إجبار الخلفية على السواد المطلق */
+    background-position: center;
+    transform: translateZ(0);
+    contain: strict;
+}
+
+.space-engine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 242, 255, 0.01) 50%, transparent 100%);
+    /* تقليل تعقيد الأنميشن لتخفيف الحرارة */
+    animation: scannerFade 20s infinite ease-in-out; 
+    pointer-events: none;
+}
+
+.space-engine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('images/stardust.png');
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.cyber-brand {
+    font-family: var(--font-code);
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    cursor: crosshair;
+    transition: transform var(--transition-smooth), filter var(--transition-smooth);
+    user-select: none;
+}
+
+.cyber-brand:hover {
+    transform: scale(1.02) skewX(-2deg);
+    filter: drop-shadow(0 0 20px var(--cyan-glow));
+}
+
+.cyber-brand span {
+    color: var(--cyan-glow);
+    text-shadow: 0 0 15px var(--cyan-glow);
+}
+
+.node-id {
+    font-family: var(--font-code);
+    color: var(--cyan-glow);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: var(--cyan-transparent);
+    padding: 6px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--cyan-dim);
+    transition: background 0.3s, color 0.3s;
+}
+
+.node-id:hover {
+    background: var(--cyan-heavy);
+    color: var(--bg-dark);
+}
+
+.profile-trigger {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--cyan-transparent);
+    border: 1.5px solid var(--cyan-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+    overflow: hidden;
+    animation: none !important;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.profile-trigger img {
+    width: 38px !important;
+    height: 38px !important;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 5;
+}
+
+.profile-trigger:hover {
+    box-shadow: 0 0 20px var(--cyan-heavy);
+    transform: rotate(15deg) scale(1.1);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--sidebar-width);
+    max-width: 85%;
+    height: 100%;
+    background: #080c10;
+    border-left: 1px solid var(--border-color);
+    z-index: 2000;
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: -15px 0 40px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.active { transform: translateX(0); }
+
+.sidebar-header {
+    padding: 25px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--code-border);
+}
+
+.history-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 10px;
+}
+/* تم حذف التكرار وتوحيد الـ Root في الأعلى */
+* {
+    margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none !important;
+}
+
+.conversation-zone, .msg-content, code, pre {
+    user-select: text;
+}
+
+.space-engine {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; height: 100%;
+    z-index: -10;
+    background: #000000; /* إزالة التدرج اللوني للحصول على خلفية سوداء تماماً */
+    background-position: center;
+}
+
+/* [تصميم سجلات المحادثة المطور] */
+.sidebar-user-header {
+    padding: 22px 20px;
+    background: rgba(0, 243, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--cyber-cyan);
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.restore-session-btn {
+    background: transparent;
+    border: none;
+    color: var(--cyber-cyan);
+    cursor: pointer;
+    transition: transform 0.3s, text-shadow 0.3s;
+    font-size: 0.9rem;
+    margin-left: 10px;
+}
+.restore-session-btn:hover { transform: rotate(180deg) scale(1.2); text-shadow: 0 0 10px var(--cyber-cyan); }
+
+.history-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition-smooth);
+}
+
+.history-card:hover {
+    background: rgba(0, 243, 255, 0.05);
+    border-color: var(--cyber-cyan);
+}
+
+.card-title-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.card-icon { color: var(--cyber-cyan); opacity: 0.7; }
+.card-text { 
+    font-size: 0.8rem; 
+    color: #fff; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+}
+
+.delete-session-btn {
+    background: transparent;
+    border: none;
+    color: #444;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    font-size: 0.9rem;
+}
+
+.delete-session-btn:hover { color: var(--neon-red); transform: scale(1.1); }
+/* إغلاق قوس الـ space-engine الذي كان مفقوداً */
+
+.space-engine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 242, 255, 0.05) 50%, transparent 100%);
+    animation: scannerMove 15s infinite linear;
+    pointer-events: none;
+}
+
+.space-engine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('images/stardust.png');
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    width: 100vw;
+    max-width: 100% !important;
+    margin: 0;
+    position: relative;
+    align-items: center;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    flex: 1 1 auto;
+}
+
+/* [شاشة الإقلاع الاحترافية - Splash Screen] */
+#app-splash-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--void-bg);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    contain: strict;
+}
+
+#app-splash-screen img {
+    width: 120px !important;
+    height: 120px !important;
+    max-width: 120px !important;
+    object-fit: contain;
+    flex-shrink: 0;
+    margin-bottom: 30px;
+    animation: splashPulse 2s infinite ease-in-out;
+}
+
+.loading-bar-container {
+    width: 200px;
+    height: 4px;
+    background: rgba(0, 243, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.loading-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--cyber-cyan);
+    box-shadow: 0 0 15px var(--cyber-cyan);
+    transition: width 0.4s ease;
+}
+
+.app-shell::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid var(--cyan-transparent);
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: inset 0 0 150px rgba(0, 242, 255, 0.08);
+    animation: shieldPulse 15s infinite ease-in-out;
+    opacity: 0.08;
+    backdrop-filter: none !important;
+    pointer-events: none;
+}
+
+.guest-mode .space-engine::after,
+.guest-mode .app-shell::before {
+    animation: none !important;
+    opacity: 0 !important;
+    display: none !important; /* إخفاء العناصر التي قد تسبب تعليق الرندر للضيوف */
+    visibility: hidden !important;
+    backdrop-filter: none !important;
+}
+
+.top-nav {
+    width: 100%;
+    height: 80px;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: none;
+    z-index: 2000; box-sizing: border-box;
+    box-shadow: none !important;
+}
+
+.cyber-brand {
+    font-family: var(--font-code);
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    cursor: crosshair;
+    transition: transform var(--transition-smooth), filter var(--transition-smooth);
+    user-select: none;
+}
+
+.cyber-brand:hover {
+    transform: scale(1.02) skewX(-2deg);
+    filter: drop-shadow(0 0 20px var(--cyan-glow));
+}
+
+.cyber-brand span {
+    color: var(--cyan-glow);
+    text-shadow: 0 0 15px var(--cyan-glow);
+}
+
+.nav-left { display: flex; align-items: center; gap: 20px; } /* تم توحيدها */
+.nav-right { display: flex; align-items: center; gap: 25px; } /* تم توحيدها */
+
+/* [تلوين أيقونات الشريط العلوي باحترافية] */
+/* الأيقونات الملونة في الشريط العلوي - تم زيادة التوهج */
+#history-toggle-btn i { color: var(--cyber-cyan); filter: drop-shadow(0 0 10px var(--cyan-transparent)); }
+#ui-zoom-btn i { color: var(--neon-purple); filter: drop-shadow(0 0 10px rgba(157, 0, 255, 0.5)); }
+#power-save-btn i { color: var(--neon-gold); filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.5)); }
+#save-chat-btn i { color: var(--neon-green); filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5)); }
+#new-chat-btn i { color: #00a2ff; filter: drop-shadow(0 0 10px rgba(0, 162, 255, 0.5)); }
+.login-trigger i { color: var(--cyber-cyan); font-size: 1.2rem; }
+
+.nav-item-btn:hover i {
+    filter: drop-shadow(0 0 10px currentColor);
+    transform: scale(1.1);
+    transition: 0.3s;
+}
+
+.node-id {
+    font-family: var(--font-code);
+    color: var(--cyan-glow);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: var(--cyan-transparent);
+    padding: 6px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--cyan-dim);
+    transition: background 0.3s, color 0.3s;
+}
+
+.node-id:hover {
+    background: var(--cyan-heavy);
+    color: var(--bg-dark);
+}
+
+.profile-trigger {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--cyan-transparent);
+    border: 1.5px solid var(--cyan-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+    overflow: hidden;
+}
+
+.profile-trigger img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-trigger:hover {
+    box-shadow: 0 0 20px var(--cyan-heavy);
+    transform: rotate(15deg) scale(1.1);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--sidebar-width);
+    max-width: 85%;
+    height: 100%;
+    background: #080c10;
+    border-left: 1px solid var(--border-color);
+    z-index: 2000;
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: -15px 0 40px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.history-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 10px;
+}
+
+.history-section-label {
+    padding: 15px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--cyan-glow);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+}
+
+.overlay { /* تم توحيدها */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(2, 6, 9, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1500;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.active { display: block; opacity: 1; } /* تم توحيدها */
+
+.modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 92%;
+    max-width: 420px;
+    background: #0d1117;
+    border: 1px solid var(--cyan-dim);
+    border-radius: var(--radius-md);
+    z-index: 3000;
+    padding: 25px;
+    display: none;
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+    color: #fff;
+}
+
+.modal.active { /* تم توحيدها */
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    border-color: var(--cyan-glow);
+}
+
+.welcome-hero {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    overflow-y: auto;
+    animation: heroFadeIn 1s ease-out forwards;
+}
+
+.hero-logo { /* تم توحيدها */
+    font-size: 1.6rem; /* تقليل طفيف للحجم العام */
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: var(--neon-gold); /* لون مميز للترحيب */
+    text-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+    font-family: var(--font-code);
+    letter-spacing: 1px;
+    opacity: 0.9;
+    border: none !important; /* التأكد من عدم وجود أي خطوط حدودية */
+}
+
+.hero-logo span {
+    /* اللون الأزرق الاحترافي العميق للوضع العادي */
+    background: linear-gradient(to right, #fff 20%, #00f3ff 40%, #00f3ff 60%, #fff 80%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline; /* تم التغيير لضمان سلامة التلوين عند التفاف النص */
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    animation: shine 3s linear infinite;
+}
+
+.user-highlight {
+    color: var(--neon-gold) !important;
+    -webkit-text-fill-color: var(--neon-gold) !important;
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+    font-weight: 800;
+    margin: 0 5px;
+}
+
+.hero-subtitle { /* تم توحيدها */
+    color: #00a2ff !important; /* أزرق احترافي متناسق */
+    font-size: 0.82rem; /* تقليل إضافي لحجم رسالة الترحيب الفرعية بناءً على طلبك */
+}
+
+.suggestion-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 مربعات بجانب بعضها */
+    gap: 10px;
+    width: 100%;
+    max-width: 850px;
+    padding: 10px;
+    margin-top: 15px; /* تقليل المسافة بين الترحيب والاقتراحات */
+}
+
+.cyber-tool-card { /* تم توحيدها */
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, var(--cyan-transparent) 100%) !important;
+    border: 1px solid rgba(0, 243, 255, 0.1) !important;
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.3s ease, border-color 0.3s, background 0.3s;
+    display: flex;
+    flex-direction: column; /* جعل الأيقونة فوق النص لتعطي مظهراً احترافياً */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+    width: 100%;
+    animation: floatCard 4s ease-in-out infinite;
+    will-change: transform;
+}
+
+.cyber-tool-card:nth-child(even) { animation-delay: 2s; }
+
+.cyber-tool-card i { /* تم توحيدها */
+    font-size: 1.3rem; /* أيقونات واضحة داخل المربع */
+}
+
+.cyber-tool-card:hover {
+    border-color: var(--cyber-cyan) !important;
+    background: linear-gradient(145deg, var(--cyan-transparent) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+    transform: translateY(-10px) scale(1.02);
+    color: var(--text-main);
+    box-shadow: 0 10px 30px rgba(0, 243, 255, 0.1);
+}
+
+@keyframes floatCard { /* تم توحيدها */
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.conversation-zone {
+    width: 100% !important;
+    max-width: 1200px !important; /* تم زيادة العرض لملء مساحة شاشة الكمبيوتر */
+    margin: 0 auto;
+    flex: 1;
+    overflow-y: auto;
+    padding: 110px 15px 200px !important; 
+    scroll-behavior: smooth;
+    display: none;
+    flex-direction: column;
+    gap: 30px !important; 
+    background: transparent !important;
+    mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 150px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 150px), transparent 100%);
+    contain: content;
+}
+
+.conversation-zone::-webkit-scrollbar { width: 8px; } /* تم توحيدها */
+.conversation-zone::-webkit-scrollbar-track { background: transparent; }
+.conversation-zone::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, transparent, var(--cyan-dim), transparent);
+    border-radius: 20px;
+}
+
+.message {
+    max-width: 100%; /* تم توحيدها */
+    width: 100%;
+    padding: 25px 0;
+    display: flex;
+    animation: messageFadeIn 0.4s ease-out forwards;
+    will-change: transform, opacity;
+    content-visibility: auto; /* تحسين الرندر للرسائل خارج النطاق المرئي */
+    contain-intrinsic-size: 0 100px; /* تحديد حجم تقديري للمتصفح */
+}
+
+.msg-header { /* تم توحيدها */
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    font-family: var(--font-code);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.msg-content { /* تم توحيدها */
+    font-size: var(--font-size-chat);
+    color: var(--text-primary);
+    word-wrap: break-word;
+    line-height: 1.85;
+    letter-spacing: 0.2px;
+    font-weight: 400;
+    overflow-wrap: anywhere; /* يمنع خروج النصوص الطويلة عن الفقاعات */
+}
+
+.msg-content img { /* تم توحيدها */
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    margin: 10px 0;
+    display: block;
+}
+
+.cyber-link { /* تم توحيدها */
+    color: var(--cyber-cyan) !important;
+    text-decoration: none !important;
+    font-weight: 600;
+    border-bottom: 2px solid var(--cyan-transparent);
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: transform 0.2s, background 0.2s;
+    position: relative;
+    display: inline-block;
+}
+
+.cyber-link:hover { /* تم توحيدها */
+    background: var(--cyan-transparent);
+    border-bottom-color: var(--cyber-cyan);
+    text-shadow: 0 0 15px var(--cyber-cyan);
+    transform: translateY(-1px);
+}
+
+.msg-wrapper {
+    width: 100%; /* تم توحيدها */
+    display: flex;
+    flex-direction: column;
+}
+
+.user-message {
+    justify-content: flex-end; /* تظهر في اليسار في وضع RTL */
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    direction: rtl;
+}
+
+.user-message .msg-wrapper { /* تم توحيدها */
+    width: fit-content !important;
+    max-width: 85% !important;
+    margin-right: auto !important; /* للحفاظ على المحاذاة لليسار في وضع RTL */
+    background: rgba(255, 51, 102, 0.1); /* خلفية حمراء شفافة احترافية */
+    border: 1.5px solid var(--neon-red); /* حدود حمراء كما طلبت */
+    border-radius: 20px 20px 20px 5px; /* الزاوية الحادة الوحيدة في اليسار */
+    padding: 15px 22px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px var(--bubble-shadow);
+}
+
+/* [تنسيق المرفقات الرسومية في رسائل المستخدم - Gemini Style] */
+.user-attachment-container { /* تم توحيدها */
+    margin-bottom: 10px;
+    width: fit-content;
+    align-self: flex-start;
+}
+
+.user-attached-image {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 15px;
+    border: 2px solid var(--cyber-cyan);
+    display: block;
+    box-shadow: 0 0 15px var(--cyan-transparent);
+    transition: transform 0.3s ease;
+    object-fit: cover;
+    background: #000;
+}
+
+.image-error-fallback { /* تم توحيدها */
+    width: 100%;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 51, 102, 0.05);
+    border: 1px dashed var(--neon-red);
+    border-radius: 15px;
+    color: var(--neon-red);
+    font-size: 0.8rem;
+    font-family: var(--font-code);
+    gap: 10px;
+}
+
+.file-attachment-tag { /* تم توحيدها */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 51, 102, 0.2);
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    font-family: var(--font-code);
+}
+
+.bot-message { /* تم توحيدها */
+    justify-content: flex-start; /* تظهر في اليمين في وضع RTL */
+    padding: 25px 0;
+    border: none;
+    background: transparent;
+    direction: rtl;
+    width: 100%;
+}
+
+.bot-message .msg-wrapper { /* تم توحيدها */
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 15px !important;
+    margin: 5px 0 !important;
+    box-shadow: none !important;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s ease;
+}
+
+.user-node-icon { /* تم توحيدها */
+    font-size: 1.2rem;
+    color: var(--cyan-glow);
+    background: var(--cyan-transparent);
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.bot-mini-logo { /* تم توحيدها */
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.input-anchor {
+    position: fixed; /* تم توحيدها */
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    background: transparent;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ========================================================================
+   [2] التعديلات الخاصة بمنطقة الإدخال والمعاينة (تم حل التضارب هنا)
+   ======================================================================== */
+.pill-container { /* تم توحيدها */
+    width: 100%;
+    background: rgba(15, 20, 25, 0.9);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: 28px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+    transition: border-color 0.3s ease;
+}
+
+.pill-container:focus-within { /* تم توحيدها */
+    border-color: var(--cyber-cyan);
+}
+
+#user-input { /* تم توحيدها */
+    width: 100%; /* تم توحيدها */
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 5px;
+    resize: none;
+    max-height: 250px;
+    min-height: 40px;
+}
+
+.main-action-btn { /* تم توحيدها */
+    width: 40px;
+    height: 40px;
+    border-radius: 12px; /* تغيير من دائري إلى مربع بزوايا ناعمة لاحترافية أكثر */
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--cyber-cyan) !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1.1rem;
+    box-shadow: none !important;
+}
+
+.main-action-btn.stop-mode { /* تم توحيدها */
+    background: var(--neon-red) !important;
+    color: #fff;
+    box-shadow: 0 0 15px var(--neon-red);
+}
+
+/* خط قوس القزح المتحرك عند الإرسال */
+.pill-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #ff3366, #ffcc00, #00ff88, #00f3ff, #9d00ff, #ff3366);
+    background-size: 200% auto;
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+    z-index: 10;
+    border-radius: 0 0 28px 28px;
+}
+
+.pill-container.sending-mode::after { /* تم توحيدها */
+    transform: scaleX(1);
+    animation: rainbowFlow 2s linear infinite;
+}
+
+.preview-wrapper {
+    display: none;
+    width: 100%;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--cyan-dim);
+}
+
+/* إصلاح حجم معاينة الصور المرفقة */
+.preview-box { /* تم توحيدها */
+    position: relative;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 242, 255, 0.05);
+    padding: 8px;
+    border-radius: 12px;
+    border: 1.5px solid var(--cyan-dim);
+}
+
+#visual-preview { /* تم توحيدها */
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+}
+
+.input-row { /* تم توحيدها */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 15px; /* تم الحفاظ على نفس المسافة الأصلية للأزرار */
+}
+/* ======================================================================== */
+
+#user-input {
+    flex: 1; /* تم توحيدها */
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    padding: 8px 5px;
+    resize: none;
+    max-height: 200px;
+    line-height: 1.5;
+}
+
+.voice-input-bar { /* تم توحيدها */
+    display: none; 
+    width: 100%;
+    min-height: 45px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    padding: 5px 0;
+}
+
+.voice-input-bar.active { /* تم توحيدها */
+    display: flex;
+}
+
+.pill-container { /* تم توحيدها */
+    position: relative; /* تم توحيدها */
+    /* تم إزالة overflow: hidden للسماح بظهور القائمة كاملة */
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.waveform-line { /* تم توحيدها */
+    width: 4px;
+    height: 15px;
+    background-color: var(--cyber-cyan);
+    border-radius: 2px;
+    animation: waveformPulse 1.2s infinite ease-in-out;
+    transform-origin: bottom;
+}
+
+.waveform-line.delay-1 { animation-delay: 0.1s; } /* تم توحيدها */
+.waveform-line.delay-2 { animation-delay: 0.2s; } /* تم توحيدها */
+.waveform-line.delay-3 { animation-delay: 0.3s; } /* تم توحيدها */
+
+@keyframes waveformPulse {
+    0%, 100% { transform: scaleY(0.5); opacity: 0.7; }
+    50% { transform: scaleY(1.5); opacity: 1; }
+}
+
+/* ======================================================================== */
+
+/* [تنسيق الواجهة الرسومية للصور المولدة - Gemini Style] */
+.generated-img-container { /* تم توحيدها */
+    margin-top: 15px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: #0a0f14;
+    max-width: 550px;
+    box-shadow: var(--shadow-main);
+    position: relative;
+}
+
+.cyber-image-wrapper { /* تم توحيدها */
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.cyber-image-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: var(--transition-smooth);
+}
+
+.cyber-image-wrapper:hover img { /* تم توحيدها */
+    filter: brightness(0.8);
+}
+
+.image-overlay-actions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.cyber-image-wrapper:hover .image-overlay-actions { /* تم توحيدها */
+    opacity: 1;
+}
+
+.image-overlay-actions button {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--cyan-transparent);
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+}
+
+.img-meta { /* تم توحيدها */
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+}
+
+.meta-left { /* تم توحيدها */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: var(--font-code);
+}
+
+.download-link { /* تم توحيدها */
+    color: var(--cyber-cyan);
+    text-decoration: none;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--cyan-transparent);
+    transition: 0.2s;
+}
+
+.download-link:hover { /* تم توحيدها */
+    background: var(--cyber-cyan);
+    color: #000;
+}
+
+.gen-loader {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--cyber-cyan);
+    font-family: var(--font-code);
+    background: var(--cyan-transparent);
+    border-radius: 15px;
+    border: 1px dashed var(--cyan-dim);
+}
+
+.input-action-btn { /* تم توحيدها */
+    width: 36px;
+    height: 36px;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 10px;
+}
+
+.input-action-btn:hover { /* تم توحيدها */
+    background: var(--cyan-transparent) !important;
+    border-color: var(--border-color) !important;
+    color: var(--cyber-cyan) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px var(--cyan-transparent);
+}
+
+/* قائمة المرفقات المنبثقة */
+.attach-popover { /* تم توحيدها */
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 0;
+    background: #111821;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    min-width: 180px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    z-index: 2100;
+}
+
+.attach-popover.active { /* تم توحيدها */
+    display: flex;
+    animation: heroFadeIn 0.3s ease;
+}
+
+.attach-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+
+.attach-item:hover { /* تم توحيدها */
+    background: var(--cyan-transparent);
+    color: var(--cyber-cyan);
+}
+
+/* [تعديل زر LIVE ليطابق زر الإرسال السيبراني مع المسافة المطلوبة] */
+.online-status-indicator {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--cyber-cyan) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1.1rem;
+    box-shadow: none !important;
+    margin-left: 10px; /* مسافة عن زر الإرسال */
+}
+
+.online-status-indicator i { /* تم توحيدها */
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+}
+
+.online-status-indicator:hover { /* تم توحيدها */
+    background: var(--cyan-transparent);
+    border-color: var(--border-color);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--cyan-transparent);
+}
+
+.online-status-indicator.active-live { /* تم توحيدها */
+    background: var(--neon-red);
+    color: #fff;
+    border-color: var(--neon-red);
+    box-shadow: 0 0 15px var(--neon-red);
+}
+
+/* [واجهة المحادثة المباشرة - Live Visualizer UI] */
+#live-visualizer { /* تم توحيدها */
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, rgba(0, 243, 255, 0.05) 0%, var(--void-bg) 70%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+}
+
+body.live-active #live-visualizer { /* تم توحيدها */
+    display: flex; 
+    animation: heroFadeIn 0.5s ease;
+}
+body.live-active .conversation-zone, 
+body.live-active .welcome-hero { display: none !important; }
+
+.central-core {
+    width: 250px; /* تم توحيدها */
+    height: 250px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.core-pulse-ring { /* تم توحيدها */
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--cyber-cyan);
+    border-radius: 50%;
+    animation: corePulseExpand 2s infinite ease-out;
+    opacity: 0;
+}
+
+.core-pulse-ring:nth-child(2) { animation-delay: 0.5s; } /* تم توحيدها */
+.core-pulse-ring:nth-child(3) { animation-delay: 1s; } /* تم توحيدها */
+
+@keyframes corePulseExpand {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* [تأثير تذبذب الترددات - Frequency Waves] */
+.frequency-wave {
+    position: absolute; /* تم توحيدها */
+    width: 100%;
+    height: 100%;
+    border: 1.5px solid var(--cyber-cyan);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.3s;
+}
+
+body.live-speaking .frequency-wave { /* تم توحيدها */
+    animation: frequencyWaveOscillate 1.5s infinite linear;
+}
+
+.frequency-wave:nth-child(1) { animation-delay: 0s; } /* تم توحيدها */
+.frequency-wave:nth-child(2) { animation-delay: 0.5s; } /* تم توحيدها */
+.frequency-wave:nth-child(3) { animation-delay: 1s; } /* تم توحيدها */
+
+@keyframes frequencyWaveOscillate {
+    0% { transform: scale(1); opacity: 0; border-radius: 50%; }
+    20% { opacity: 0.6; border-radius: 45% 55% 50% 40%; }
+    100% { transform: scale(2.2); opacity: 0; border-radius: 55% 45% 40% 60%; }
+}
+
+.attach-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+/* تصميم زر الوضع العميق */
+#deep-mode-toggle {
+    transition: all 0.4s ease;
+}
+
+#deep-mode-toggle.active {
+    color: var(--neon-red) !important;
+    filter: drop-shadow(0 0 12px var(--neon-red));
+    transform: scale(1.2);
+    animation: cyberVibration 0.3s infinite linear;
+}
+
+/* الحركات */
+@keyframes heroFadeIn { /* تم توحيدها */
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* تحسين حركة اللمعان لتكون أخف على المعالج */
+@keyframes shine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes messageFadeIn { /* تم توحيدها */
+    from { opacity: 0; transform: translateY(15px); filter: blur(5px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes shieldPulse {
+    /* تحريك الشفافية فقط بدلاً من الظلال المعقدة لمنع السخونة */
+    0%, 100% { opacity: 0.05; }
+    50% { opacity: 0.12; }
+}
+
+@keyframes neonRainbow { /* تم توحيدها */
+    /* تحريك الألوان فقط بدون ظلال خارجية */
+    0% { border-color: var(--neon-red); }
+    50% { border-color: var(--neon-green); }
+    100% { border-color: var(--neon-red); }
+}
+
+@keyframes rainbowFlow {
+    0% { background-position: 0% center; } /* تم توحيدها */
+    100% { background-position: -200% center; }
+}
+
+@keyframes scannerMove {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* إخفاء شريط التمرير تماماً من جهة اليسار لجعل المربعات تلمس الحافة */ /* تم توحيدها */
+.conversation-zone::-webkit-scrollbar {
+    display: none !important;
+}
+.conversation-zone {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+@media (max-width: 900px) { /* تم توحيدها */
+    .top-nav { padding: 0 15px; height: 65px; }
+    .conversation-zone { padding: 20px 15px 120px; gap: 35px; }
+    .msg-content { font-size: 1rem; }
+    .pill-container { padding: 12px 12px; } /* تعديل بسيط ليتوافق مع العمود في الجوال */
+    .input-action-btn { width: 38px; height: 38px; font-size: 1.2rem; }
+}
+
+/* ==========================================================================
+   GEMINI CODEBLOCK STYLING FOR NAVA CORE v9.5 (INTEGRATED)
+   ========================================================================== */
+
+/* الحاوية الأساسية للمربع */
+pre.gemini-code-container {
+    background-color: #0d1117 !important; /* خلفية GitHub Dark المفضلة للمبرمجين */
+    border-radius: 12px !important;
+    border: 1px solid #30363d !important;
+    overflow-x: hidden !important;
+    margin-top: 15px !important;
+    margin-bottom: 20px !important;
+    width: 100% !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7) !important;
+    display: flex;
+    flex-direction: column;
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* الشريط العلوي لمربع الكود */
+.gemini-code-header {
+    background-color: #161b22 !important;
+    padding: 10px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    user-select: none;
+    justify-content: space-between;
+}
+
+.code-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* أزرار التحكم (Window Dots) */
+.code-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.code-controls .dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+.dot.red { background: #ff5f56; border: 1px solid #e0443e; }
+.dot.yellow { background: #ffbd2e; border: 1px solid #dea123; }
+.dot.green { background: #27c93f; border: 1px solid #1aab29; }
+
+/* اسم لغة البرمجة (يسار) */
+.gemini-lang-badge {
+    color: var(--cyber-cyan) !important;
+    font-size: 0.75rem !important;
+    font-family: var(--font-code) !important;
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+/* زر نسخ الكود (يمين) */
+.gemini-copy-btn, .gemini-download-btn, .gemini-run-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    cursor: pointer !important;
+    font-size: 0.85rem !important;
+    font-family: var(--font-main) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 12px !important;
+    border-radius: var(--radius-sm) !important;
+    transition: var(--transition-smooth) !important;
+}
+
+/* حركة التحويم لزر النسخ */
+.gemini-copy-btn:hover {
+    color: var(--cyber-cyan) !important;
+    background-color: var(--cyan-transparent) !important;
+}
+
+.gemini-download-btn:hover {
+    color: var(--neon-green) !important;
+    background-color: rgba(0, 255, 136, 0.1) !important;
+}
+
+/* جسم الكود الداخلي */
+.gemini-code-body {
+    padding: 8px 0 !important; /* إزالة الفراغات الجانبية وتقليل العلوية والسفلية */
+    overflow-x: auto !important; /* تفعيل التمرير الأفقي للأكواد الطويلة */
+    background: transparent !important;
+    text-align: left !important;
+    scrollbar-width: thin; /* دعم متصفح فايرفوكس */
+    scrollbar-color: #334155 #0d1117; /* دعم متصفح فايرفوكس */
+}
+
+/* تنسيق الخط والرموز داخل الكود */
+.gemini-code-body code {
+    font-family: var(--font-code) !important;
+    font-size: 0.92rem !important;
+    line-height: 1.7 !important;
+    color: #e6edf3; /* إزالة !important لكي يعمل التلوين التلقائي */
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+    white-space: pre !important;
+    word-break: normal !important; 
+    text-shadow: none !important;
+    font-weight: 500;
+}
+
+/* [إبادة الخلل في تلوين الأكواد - Absolute Syntax Overrides] */
+.hljs-keyword, .hljs-operator, .hljs-meta { color: #ff7b72 !important; font-weight: bold !important; }
+.hljs-string, .hljs-regexp, .hljs-addition { color: #a5d6ff !important; }
+.hljs-comment, .hljs-quote { color: #5c6370 !important; font-style: italic !important; }
+.hljs-function, .hljs-title, .hljs-section { color: #d2a8ff !important; font-weight: bold !important; }
+.hljs-number, .hljs-variable, .hljs-constant { color: #d19a66 !important; }
+.hljs-attr, .hljs-attribute, .hljs-symbol { color: #79c0ff !important; }
+.hljs-built_in, .hljs-type { color: #ffa657 !important; }
+.hljs-params, .hljs-bullet { color: #f8f8f2 !important; }
+
+/* تلوين الوضع العميق الصارم */
+body.deep-mode-active .hljs-keyword { color: #ff003c !important; text-shadow: 0 0 8px rgba(255,0,60,0.4) !important; }
+body.deep-mode-active .hljs-string { color: #ffcc00 !important; text-shadow: 0 0 5px rgba(255,204,0,0.3) !important; }
+body.deep-mode-active .hljs-comment { color: #ff3366 !important; opacity: 0.5; }
+
+/* تحسين حاوية الكود لمنع التداخل البصري */
+.gemini-code-body {
+    padding: 15px !important;
+    overflow-x: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--cyber-cyan) #0d1117 !important;
+}
+body.deep-mode-active .hljs-function { color: #ffffff !important; }
+
+.gemini-code-body::-webkit-scrollbar {
+    height: 4px !important; /* شريط سحب نحيف جداً */
+}
+.gemini-code-body::-webkit-scrollbar-track {
+    background: #0d1117 !important;
+}
+.gemini-code-body::-webkit-scrollbar-thumb {
+    background: var(--cyber-cyan) !important; /* لون سيان متوهج للسحب */
+    border-radius: 10px !important;
+    box-shadow: 0 0 10px var(--cyber-cyan) !important;
+}
+.gemini-code-body::-webkit-scrollbar-thumb:hover {
+    background: var(--cyan-dim) !important;
+}
+.search-credibility {
+    font-size: 0.65rem;
+    color: var(--neon-gold);
+    background: rgba(255, 204, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: var(--font-main);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.search-item {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.search-item:hover {
+    background: var(--cyan-transparent);
+    border-color: var(--cyber-cyan);
+    transform: translateX(-5px);
+}
+
+.search-title {
+    color: var(--cyber-cyan);
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-snippet {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    margin: 5px 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* [بطاقة المباراة السيبرانية - Cyber Match Card] */
+.match-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(0, 243, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin: 15px 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-main);
+}
+.match-card::before {
+    content: 'LIVE_FEED';
+    position: absolute;
+    top: 5px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    color: var(--cyber-cyan);
+    font-family: var(--font-code);
+    letter-spacing: 2px;
+    opacity: 0.5;
+}
+.match-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+.match-team img { width: 55px; height: 55px; object-fit: contain; filter: drop-shadow(0 0 8px var(--cyan-transparent)); }
+.match-team span { font-size: 0.85rem; color: #fff; font-family: var(--font-main); font-weight: bold; text-align: center; }
+.match-score-info { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+.match-score-val { font-size: 2.2rem; font-weight: 900; color: var(--cyber-cyan); font-family: var(--font-code); text-shadow: 0 0 15px var(--cyan-glow); }
+.match-status { font-size: 0.65rem; color: var(--neon-gold); font-family: var(--font-code); background: rgba(255,204,0,0.1); padding: 2px 8px; border-radius: 4px; }
+
+.search-link {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-family: var(--font-code);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   CYBER LINE LOGIC & BOT THINKING ANIMATIONS (INTERACTIVE)
+   ========================================================================== */
+
+/* تأثير خط النبض التفاعلي أثناء الرد */
+.bot-message.thinking-mode {
+    position: relative;
+    overflow: hidden;
+}
+
+.bot-message.thinking-mode .msg-wrapper {
+    background: transparent !important; /* إزالة الحاوية الزرقاء */
+    border: none !important;
+    opacity: 0.8;
+}
+
+.bot-message.thinking-mode::after {
+    display: none !important;
+}
+
+/* حاوية نقاط التفكير السيبرانية */
+.cyber-typing-loader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.cyber-loader-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--cyber-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyber-cyan);
+    animation: cyberDotGlow 1.4s infinite ease-in-out both;
+}
+
+.cyber-loader-dot:nth-child(1) { animation-delay: -0.32s; }
+.cyber-loader-dot:nth-child(2) { animation-delay: -0.16s; }
+
+/* حركات الأنيميشن التفاعلية */
+@keyframes cyberLinePulse {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+@keyframes cyberDotGlow {
+    0%, 80%, 100% { 
+        transform: scale(0.6); 
+        opacity: 0.3; 
+    }
+    40% { 
+        transform: scale(1.2); 
+        opacity: 1; 
+    }
+}
+
+/* ==========================================================================
+   AI BOT AVATAR NEON GLOW EFFECTS (v9.5 INTERACTIVE)
+   ========================================================================== */
+
+/* الحاوية المحيطة بأيقونة البوت داخل صندوق الرسائل */
+.bot-message .message-avatar,
+.chat-message.bot .avatar-container,
+.bot-avatar-wrapper,
+.bot-avatar-frame {
+    position: relative;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    transition: var(--transition-smooth) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* إصلاح أبعاد الصورة الداخلية للبوت لتملأ الدائرة النيون */
+.bot-avatar-frame img { /* استهداف الصورة داخل الحاوية */
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    z-index: 2;
+}
+
+.bot-avatar-frame.thinking-avatar { /* تطبيق الحركة عند وجود فئة 'thinking-avatar' على الحاوية */
+    background: transparent !important;
+    position: relative;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* [تأثير التفكير للوضع العادي - Digital Scanner] */
+.bot-avatar-frame.thinking-avatar::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--cyber-cyan);
+    border-right: 2px solid var(--cyber-cyan);
+    border-radius: 50%;
+    animation: rotateScanner 0.8s linear infinite !important;
+    z-index: 1;
+}
+
+.bot-avatar-frame.thinking-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    background: var(--cyan-transparent);
+    border-radius: 50%;
+    animation: calmPulse 1.5s infinite ease-in-out !important;
+    z-index: 0;
+    filter: blur(4px);
+}
+
+/* [تأثير التفكير للوضع العميق - Core Glitch] */
+body.deep-mode-active .bot-avatar-frame.thinking-avatar::before {
+    border-top-color: var(--neon-red) !important;
+    border-right-color: var(--neon-red) !important;
+    animation: rotateScanner 0.4s linear infinite !important; /* دوران أسرع وهجومي */
+    filter: drop-shadow(0 0 5px var(--neon-red));
+}
+
+body.deep-mode-active .bot-avatar-frame.thinking-avatar::after {
+    background: rgba(255, 51, 102, 0.2) !important;
+    animation: glitchVibration 0.2s infinite linear !important; /* اهتزاز عالي التردد */
+    filter: blur(2px);
+}
+
+body.deep-mode-active .bot-avatar-frame.thinking-avatar img {
+    animation: cyberVibration 0.3s infinite linear !important;
+}
+
+.bot-avatar-frame.thinking-avatar img {
+    position: relative !important;
+    z-index: 5 !important;
+    background: var(--void-bg);
+    border-radius: 50%;
+    padding: 2px;
+    animation: none !important; /* جعل الصورة ثابتة تماماً */
+}
+
+.bot-avatar-frame {
+    overflow: visible !important;
+}
+
+/* تعريفات الأيقونة السيبرانية (Cyber Core) لضمان ظهورها وتفاعلها */
+.cyber-core-icon {
+    width: 26px;
+    height: 26px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 8px var(--cyber-cyan));
+}
+
+.core-center {
+    width: 8px;
+    height: 8px;
+    background: var(--cyber-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 15px var(--cyber-cyan);
+    z-index: 2;
+    animation: corePulse 2s infinite ease-in-out;
+}
+
+.core-orbit, .core-orbit-inner {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--cyber-cyan);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+}
+
+.core-orbit { width: 100%; height: 100%; opacity: 0.6; }
+.core-orbit-inner { width: 70%; height: 70%; border-color: var(--neon-purple); border-left-color: transparent; border-right-color: transparent; }
+
+@keyframes rotateScanner {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes glitchVibration {
+    0% { transform: scale(1.1) translate(0); opacity: 0.4; }
+    25% { transform: scale(1.15) translate(1px, -1px); opacity: 0.6; }
+    50% { transform: scale(1.1) translate(-1px, 1px); opacity: 0.4; }
+    75% { transform: scale(1.2) translate(1px, 1px); opacity: 0.7; }
+    100% { transform: scale(1.1) translate(0); opacity: 0.4; }
+}
+
+@keyframes calmPulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+@keyframes corePulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } }
+
+@keyframes botIconPulse {
+    0%, 100% {
+        border-color: rgba(0, 243, 255, 0.4);
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+    }
+    50% {
+        border-color: var(--cyber-cyan);
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.6), inset 0 0 8px rgba(0, 243, 255, 0.3);
+    }
+}
+
+/* حركة التوهج السريع لأيقونة البوت أثناء التفكير ومعالجة الردود */
+@keyframes botIconThinkingGlow {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.05);
+        filter: brightness(1.3);
+    }
+}
+
+/* حركة دوران الحلقة الخارجية المتقطعة حول أيقونة البوت */
+@keyframes rotateCyberRing {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes splashPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+/* --- [تأثير الاهتزاز السيبراني - Cyber Vibration] --- */
+@keyframes cyberVibration {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(0.5px, 0.5px); }
+    50% { transform: translate(-0.5px, 0.2px); }
+    75% { transform: translate(0.5px, -0.5px); }
+    100% { transform: translate(0, 0); }
+}
+
+/* تطبيق الاهتزاز على أيقونة البوت أثناء التفكير */
+/* تم إزالة حركة الاهتزاز من هنا لضمان ثبات الصورة ودوران الحلقة فقط */
+
+/* تطبيق الاهتزاز على أيقونة الصوت أثناء القراءة */
+.tts-btn.playing i {
+    animation: cyberVibration 0.2s infinite linear;
+}
+
+/* --- [تنسيق زر قراءة النص - TTS Styling] --- */
+.tts-btn {
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid var(--cyan-dim);
+    color: var(--text-secondary);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-family: var(--font-code);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    /* margin-top: 15px; // تم إزالته لضمان المحاذاة الصحيحة داخل msg-header */
+    user-select: none;
+}
+
+.tts-btn:hover {
+    border-color: var(--cyan-glow);
+    color: var(--cyan-glow);
+    background: var(--cyan-transparent);
+    box-shadow: 0 0 10px var(--cyan-transparent);
+}
+
+.tts-btn.playing {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+    animation: botIconThinkingGlow 1.5s infinite;
+}
+
+/* ========================================================================
+   GEMINI FULL-WIDTH RESPONSIVE ENGINE (FOR PHONE SCREENS)
+   ======================================================================== */
+/* [توحيد شاشة الترحيب وحذف الأيقونة الكبيرة] */
+@media (max-width: 768px) {
+    .top-nav { height: 60px; padding: 0 15px; }
+    .cyber-brand { font-size: 1.1rem; }
+    #chat-container, .conversation-zone { padding: 75px 10px 130px !important; }
+
+    .input-anchor {
+        width: 96%;
+        bottom: 12px;
+    }
+
+    .suggestion-grid {
+        grid-template-columns: repeat(2, 1fr); /* في الجوال نكتفي بمربعين بجانب بعض */
+    }
+
+    .cyber-tool-card {
+        font-size: 0.65rem !important;
+    }
+    .hero-header { margin-top: 15px; } /* تقليل المسافة العلوية في الجوال */
+    .hero-logo { font-size: 0.95rem !important; } /* تصغير رسالة الترحيب لتكون متناسقة جداً مع الجوال */
+    .hero-subtitle { font-size: 0.68rem !important; } /* تصغير إضافي لرسالة الترحيب الفرعية للجوال */
+
+    .top-nav { height: 60px; padding: 0 10px; }
+    .nav-left, .nav-right { gap: 10px; }
+    .nav-item-btn, .nav-zoom-btn, .nav-power-btn { 
+        width: 32px; 
+        height: 32px; 
+        font-size: 0.9rem; 
+    }
+
+    .pill-container {
+        padding: 12px 15px;
+        border-radius: 22px;
+    }
+
+    /* الحفاظ على شفافية رد البوت وموقع الأيقونة في اليمين */
+    .bot-message .msg-wrapper {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+}
+
+/* ==========================================================================
+   DEEP MODE VISUAL OVERRIDES (CYBER RED TRANSFORMATION)
+   ========================================================================== */
+body.deep-mode-active { /* تم توحيدها */
+    --cyber-cyan: var(--neon-red);
+    --cyan-glow: var(--neon-red);
+    --cyan-transparent: rgba(255, 51, 102, 0.15);
+    --cyan-heavy: rgba(255, 51, 102, 0.5);
+    --cyan-dim: #450015;
+    --border-color: rgba(255, 51, 102, 0.3);
+    --chat-bubble-user: rgba(255, 51, 102, 0.15);
+    --chat-bubble-bot: rgba(40, 5, 10, 0.8);
+    --bubble-shadow: rgba(255, 51, 102, 0.2);
+    --neon-glow: 0 0 15px rgba(255, 51, 102, 0.6);
+    --border-glow: 0 0 20px rgba(255, 51, 102, 0.3);
+}
+
+/* [تعديل ألوان الترحيب في الوضع العميق - Professional Red] */ /* تم توحيدها */
+body.deep-mode-active .hero-logo span {
+    background: linear-gradient(to right, #fff 20%, #ff003c 40%, #ff003c 60%, #fff 80%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+body.deep-mode-active .hero-subtitle { /* تم توحيدها */
+    color: #ff003c !important;
+}
+
+body.deep-mode-active .pill-container { /* تم توحيدها */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(255, 51, 102, 0.1);
+}
+
+body.deep-mode-active .hero-logo { /* تم توحيدها */
+    color: var(--neon-red);
+    text-shadow: 0 0 15px rgba(255, 51, 102, 0.3);
+}
+
+/* تحويل محرك الفضاء والخلفية للون أحمر داكن ومرعب */ /* تم توحيدها */
+body.deep-mode-active .space-engine {
+    background: #000000 !important; /* إجبار الخلفية السوداء العميقة حتى في الوضع العميق */
+}
+
+/* تلوين شريط التمرير باللون الأحمر في الوضع العميق */ /* تم توحيدها */
+body.deep-mode-active *::-webkit-scrollbar-thumb {
+    background: var(--neon-red) !important;
+    opacity: 0.5;
+}
+
+body.deep-mode-active .app-shell::before { /* تم توحيدها */
+    box-shadow: inset 0 0 150px rgba(255, 51, 102, 0.12);
+}
+
+/* Style for the skull icon in deep mode modal */ /* تم توحيدها */
+#deep-mode-modal .fa-skull-crossbones {
+    filter: drop-shadow(0 0 10px var(--neon-red));
+    animation: cyberVibration 0.5s infinite linear;
+}
+
+
+/* مربعات الأكواد في الوضع العميق (Dark Red Theme) */ /* تم توحيدها */
+body.deep-mode-active pre.gemini-code-container {
+    background-color: #1a0000 !important;
+    border-color: rgba(255, 51, 102, 0.4) !important;
+    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.2) !important;
+}
+
+body.deep-mode-active .gemini-code-header { /* تم توحيدها */
+    background-color: #260000 !important;
+    border-bottom: 1px solid rgba(255, 51, 102, 0.2) !important;
+}
+
+/* نظام التنبيهات المدمج (Cyber Notification System) */ /* تم توحيدها */
+#notification-zone {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.cyber-toast {
+    background: rgba(10, 15, 20, 0.9);
+    border: 1px solid var(--cyber-cyan);
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: heroFadeIn 0.3s ease-out;
+    pointer-events: auto;
+}
+
+/* إلغاء الـ Padding الجانبي من الأب الحاضن للشاشة */
+.app-shell, body {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.cyber-offline-overlay {
+    position: fixed;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 420px;
+    z-index: 10010;
+    display: none;
+    justify-content: center;
+    pointer-events: none;
+    animation: slideDownAlert 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.offline-alert-card {
+    pointer-events: auto;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--neon-red);
+    padding: 12px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 51, 102, 0.1);
+    width: 100%;
+}
+
+.alert-mini-icon {
+    font-size: 1.4rem;
+    color: var(--neon-red);
+    animation: cyberVibration 0.5s infinite linear;
+}
+
+.alert-info-text {
+    flex: 1;
+    text-align: right;
+    direction: rtl;
+}
+
+.alert-info-text h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.alert-info-text p {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.alert-refresh-btn {
+    background: var(--neon-red);
+    color: #fff;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.alert-refresh-btn:hover {
+    background: #fff;
+    color: var(--neon-red);
+    transform: rotate(180deg);
+}
+
+@keyframes slideDownAlert {
+    from { transform: translate(-50%, -200%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* تحسين مظهر أخطاء المحادثة */ /* تم توحيدها */
+.error-node {
+    color: var(--neon-red);
+    background: rgba(255, 51, 102, 0.05);
+    border: 1px solid rgba(255, 51, 102, 0.2);
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* [تنسيق زر الزووم السيبراني - NAVA ZOOM] */ /* تم توحيدها */
+.nav-zoom-btn {
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    -webkit-appearance: none;
+    color: var(--cyber-cyan) !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 10px;
+}
+
+.nav-item-btn {
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    -webkit-appearance: none;
+    color: var(--text-primary);
+    padding: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.nav-zoom-btn:hover, .nav-power-btn:hover, .nav-item-btn:hover {
+    background: var(--cyan-transparent) !important;
+    border-color: var(--border-color) !important;
+}
+
+.nav-power-btn {
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    -webkit-appearance: none;
+    color: var(--neon-gold) !important;
+    filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.1));
+}
+.power-saving-mode .nav-power-btn {
+    color: #fff !important;
+    filter: drop-shadow(0 0 20px var(--neon-gold)) !important;
+    background: none !important; /* إلغاء المربع الذهبي المزعج */
+    box-shadow: none !important;
+}
+
+/* [محرك توفير الطاقة - إيقاف الجهد الرسومي] */ /* تم توحيدها */
+.power-saving-mode *, 
+.power-saving-mode *::before, 
+.power-saving-mode *::after {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+/* الحفاظ على ثبات العناصر عند إيقاف الأنميشن */ /* تم توحيدها */
+.power-saving-mode .space-engine::after { display: none; }
+.power-saving-mode .app-shell::before { border: 1px solid #111; opacity: 0.3; }
+.power-saving-mode .cyber-tool-card { transform: none !important; }
+
+/* ضمان تلوين الأكواد بقوة */ /* تم توحيدها */
+.hljs { display: block; overflow-x: auto; padding: 1em; }
+.hljs-keyword { color: #ff3366 !important; font-weight: bold; }

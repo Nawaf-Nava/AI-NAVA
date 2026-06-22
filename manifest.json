@@ -1,0 +1,23 @@
+{
+  "name": "NAVA",
+  "short_name": "NAVA",
+  "description": "NAVA - المساعد الذكي المتقدم",
+  "start_url": "index.php",
+  "display": "standalone",
+  "background_color": "#020609",
+  "theme_color": "#00f3ff",
+  "icons": [
+    {
+      "src": "images/gogo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/gogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
