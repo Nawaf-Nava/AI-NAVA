@@ -17,6 +17,13 @@ echo "------------------\n\n";
 
 echo "Attempting to connect to MySQL...\n";
 
+// تضمين ملف الاتصال سيقوم بتعريف المتغيرات $host, $port, $db, $user
+require_once 'config/database.php';
+
+echo "\n--- [ Current Connection Settings ] ---\n";
+echo "Host: " . (getenv('MYSQLHOST') ? $host . " (from Railway ENV)" : $host . " (local default)") . "\n";
+echo "Database: " . (getenv('MYSQLDATABASE') ? $dbname . " (from Railway ENV)" : $dbname . " (local default)") . "\n\n";
+
 require_once 'config/database.php'; // تضمين ملف الاتصال بقاعدة البيانات
 
 try {
