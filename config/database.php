@@ -1,89 +1,145 @@
 <?php
 /**
- * PROJECT: NAVA AI - PostgreSQL Connection (Enhanced)
+ * PROJECT: NAVA AI - PostgreSQL Connection (FULL DIAGNOSTIC)
  * DATABASE: Railway PostgreSQL
- * ENHANCED DIAGNOSTICS VERSION
+ * VERSION: WITH COMPLETE DEBUGGING
  */
 
-// 1. محاولة الحصول على متغيرات البيئة
-$host   = getenv('PGHOST') ?: $_ENV['PGHOST'] ?? null;
-$dbname = getenv('PGDATABASE') ?: $_ENV['PGDATABASE'] ?? null;
-$user   = getenv('POSTGRES_USER') ?: $_ENV['POSTGRES_USER'] ?? null;
-$pass   = getenv('POSTGRES_PASSWORD') ?: $_ENV['POSTGRES_PASSWORD'] ?? null;
-$port   = getenv('PGPORT') ?: $_ENV['PGPORT'] ?? '5432';
-
-// 2. التشخيص - حفظ معلومات الاتصال (للتصحيح فقط - احذفها بعد الإصلاح)
-$debug_log = __DIR__ . '/database_debug.log';
-$debug_info = [
-    'timestamp' => date('Y-m-d H:i:s'),
-    'host_set' => !empty($host) ? '✓ نعم' : '✗ لا',
-    'dbname_set' => !empty($dbname) ? '✓ نعم' : '✗ لا',
-    'user_set' => !empty($user) ? '✓ نعم' : '✗ لا',
-    'pass_set' => !empty($pass) ? '✓ نعم (مخفي)' : '✗ لا',
-    'port_value' => $port,
-];
-file_put_contents($debug_log, json_encode($debug_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n", FILE_APPEND);
-
-// 3. التحقق من وصول المتغيرات
-if (!$host || !$dbname || !$user || !$pass) {
-    $error_msg = "❌ بيانات الاتصال غير مكتملة:\n";
-    if (!$host) $error_msg .= "- PGHOST غير موجود\n";
-    if (!$dbname) $error_msg .= "- PGDATABASE غير موجود\n";
-    if (!$user) $error_msg .= "- POSTGRES_USER غير موجود\n";
-    if (!$pass) $error_msg .= "- POSTGRES_PASSWORD غير موجود\n";
-    
-    file_put_contents($debug_log, "ERROR: " . $error_msg . "\n", FILE_APPEND);
-    die($error_msg . "\n\n⚠️ تأكد من متغيرات البيئة في لوحة تحكم Railway");
+// 1. إنشاء مجلد logs إذا لم يكن موجوداً
+$logs_dir = __DIR__ . '/../logs';
+if (!is_dir($logs_dir)) {
+    mkdir($logs_dir, 0755, true);
 }
 
-// 4. بناء رابط الاتصال
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
+// 2. ملف السجل
+$debug_log = $logs_dir . '/database_connection_' . date('Y-m-d') . '.log';
 
-// 5. خيارات الاتصال
+function log_debug($message) {
+    global $debug_log;
+    $timestamp = date('Y-m-d H:i:s');
+    file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND);
+}
+
+log_debug("=== بدء اختبار الاتصال ===");
+
+// 3. جلب متغيرات البيئة - حاول طرق متعددة
+$host   = getenv('PGHOST') ?: $_ENV['PGHOST'] ?? $_SERVER['PGHOST'] ?? null;
+$dbname = getenv('PGDATABASE') ?: $_ENV['PGDATABASE'] ?? $_SERVER['PGDATABASE'] ?? null;
+$user   = getenv('POSTGRES_USER') ?: $_ENV['POSTGRES_USER'] ?? $_SERVER['POSTGRES_USER'] ?? null;
+$pass   = getenv('POSTGRES_PASSWORD') ?: $_ENV['POSTGRES_PASSWORD'] ?? $_SERVER['POSTGRES_PASSWORD'] ?? null;
+$port   = getenv('PGPORT') ?: $_ENV['PGPORT'] ?? $_SERVER['PGPORT'] ?? '5432';
+
+// 4. تسجيل المتغيرات المستلمة
+log_debug("PGHOST: " . ($host ? "موجود ($host)" : "غير موجود"));
+log_debug("PGDATABASE: " . ($dbname ? "موجود ($dbname)" : "غير موجود"));
+log_debug("POSTGRES_USER: " . ($user ? "موجود ($user)" : "غير موجود"));
+log_debug("POSTGRES_PASSWORD: " . ($pass ? "موجود (مخفي)" : "غير موجود"));
+log_debug("PGPORT: $port");
+
+// 5. التحقق من وجود كل المتغيرات المطلوبة
+$missing = [];
+if (!$host) $missing[] = 'PGHOST';
+if (!$dbname) $missing[] = 'PGDATABASE';
+if (!$user) $missing[] = 'POSTGRES_USER';
+if (!$pass) $missing[] = 'POSTGRES_PASSWORD';
+
+if (!empty($missing)) {
+    $error_msg = "❌ متغيرات بيئة مفقودة: " . implode(', ', $missing) . "\n\n";
+    $error_msg .= "📋 المتغيرات المطلوبة في Railway:\n";
+    $error_msg .= "• PGHOST\n";
+    $error_msg .= "• PGDATABASE\n";
+    $error_msg .= "• POSTGRES_USER\n";
+    $error_msg .= "• POSTGRES_PASSWORD\n";
+    $error_msg .= "• PGPORT (اختياري)\n\n";
+    $error_msg .= "🔗 اذهب إلى: https://railway.app -> Variables\n";
+    $error_msg .= "ثم انسخ واللصق القيم بدقة\n\n";
+    $error_msg .= "🛠️ ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
+    
+    log_debug("ERROR: " . implode(', ', $missing) . " غير موجودة");
+    log_debug("=== انتهى الاختبار بفشل ===\n");
+    
+    die($error_msg);
+}
+
+// 6. بناء DSN
+$dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
+log_debug("DSN المبني: pgsql:host=$host;port=$port;dbname=$dbname");
+
+// 7. خيارات الاتصال
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
-    PDO::ATTR_PERSISTENT         => false, // استخدام fresh connection
 ];
 
-// 6. محاولة الاتصال مع تسجيل تفصيلي
+// 8. محاولة الاتصال
 try {
-    file_put_contents($debug_log, "Attempting connection to: $host:$port/$dbname\n", FILE_APPEND);
+    log_debug("جاري محاولة الاتصال...");
     
     $pdo = new PDO($dsn, $user, $pass, $options);
     
-    // اختبار الاتصال
-    $test_query = $pdo->query("SELECT 1");
-    if ($test_query) {
-        file_put_contents($debug_log, "✓ SUCCESS: الاتصال بقاعدة البيانات نجح!\n\n", FILE_APPEND);
-    }
+    // اختبار الاتصال بـ query بسيطة
+    $test = $pdo->query("SELECT NOW()");
+    $result = $test->fetch();
+    
+    log_debug("✓ الاتصال نجح!");
+    log_debug("✓ الوقت من قاعدة البيانات: " . $result['now']);
+    log_debug("=== انتهى الاختبار بنجاح ===\n");
+    
+    // الاتصال نجح - نتابع العمل
     
 } catch (PDOException $e) {
-    $error_details = [
-        'error_code' => $e->getCode(),
-        'error_message' => $e->getMessage(),
-        'host' => $host,
-        'port' => $port,
-        'database' => $dbname,
-        'user' => $user,
-    ];
+    $error_code = $e->getCode();
+    $error_msg_raw = $e->getMessage();
     
-    file_put_contents($debug_log, "❌ DATABASE CONNECTION ERROR:\n" . json_encode($error_details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n", FILE_APPEND);
+    log_debug("❌ فشل الاتصال!");
+    log_debug("Error Code: $error_code");
+    log_debug("Error Message: $error_msg_raw");
+    log_debug("=== انتهى الاختبار بفشل ===\n");
     
-    error_log("DATABASE_ERROR: " . $e->getMessage());
+    // تشخيص الخطأ بناءً على رمز الخطأ
+    $diagnosis = "";
     
-    // رسالة خطأ مفيدة للمستخدم
-    $error_message = "فشل الاتصال بقاعدة البيانات:\n\n";
-    $error_message .= "• Host: " . $host . "\n";
-    $error_message .= "• Database: " . $dbname . "\n";
-    $error_message .= "• Error Code: " . $e->getCode() . "\n";
-    $error_message .= "• Error: " . substr($e->getMessage(), 0, 100) . "...\n\n";
-    $error_message .= "تأكد من:\n";
-    $error_message .= "1. متغيرات البيئة في Railway مطبوعة بشكل صحيح\n";
-    $error_message .= "2. قاعدة البيانات تعمل وقابلة للوصول\n";
-    $error_message .= "3. بيانات المستخدم صحيحة\n";
+    if (strpos($error_msg_raw, 'could not translate host name') !== false) {
+        $diagnosis = "❌ Hostname غير صحيح أو غير موجود\n";
+        $diagnosis .= "   تأكد من قيمة PGHOST من Railway\n";
+    } elseif (strpos($error_msg_raw, 'Connection refused') !== false) {
+        $diagnosis = "❌ قاعدة البيانات لا ترد على الطلب\n";
+        $diagnosis .= "   تحقق من أن PostgreSQL مشغل في Railway\n";
+    } elseif (strpos($error_msg_raw, 'password authentication failed') !== false) {
+        $diagnosis = "❌ كلمة المرور خاطئة\n";
+        $diagnosis .= "   تأكد من POSTGRES_PASSWORD\n";
+    } elseif (strpos($error_msg_raw, 'database') !== false && strpos($error_msg_raw, 'does not exist') !== false) {
+        $diagnosis = "❌ اسم قاعدة البيانات خاطئ\n";
+        $diagnosis .= "   تأكد من PGDATABASE\n";
+    } elseif (strpos($error_msg_raw, 'SSL') !== false) {
+        $diagnosis = "❌ مشكلة في SSL/TLS\n";
+        $diagnosis .= "   جرب إضافة sslmode=disable في DSN\n";
+    } else {
+        $diagnosis = "❌ خطأ غير معروف - انظر التفاصيل أدناه\n";
+    }
+    
+    $error_message = "🔴 فشل الاتصال بقاعدة البيانات\n\n";
+    $error_message .= "📊 التفاصيل:\n";
+    $error_message .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    $error_message .= "Host: $host\n";
+    $error_message .= "Database: $dbname\n";
+    $error_message .= "User: $user\n";
+    $error_message .= "Port: $port\n\n";
+    $error_message .= "🔍 التشخيص:\n";
+    $error_message .= $diagnosis . "\n";
+    $error_message .= "📝 الخطأ الأصلي:\n";
+    $error_message .= substr($error_msg_raw, 0, 200) . "...\n\n";
+    $error_message .= "📄 ملف السجل الكامل:\n";
+    $error_message .= $debug_log . "\n\n";
+    $error_message .= "🚀 الحل:\n";
+    $error_message .= "1. اذهب إلى https://railway.app\n";
+    $error_message .= "2. افتح المشروع الخاص بك\n";
+    $error_message .= "3. انسخ جميع متغيرات البيئة\n";
+    $error_message .= "4. حدثها في ملف .env أو في إعدادات الخادم\n";
     
     die($error_message);
 }
+
+// تم الاتصال بنجاح!
 ?>
