@@ -26,10 +26,10 @@ foreach ($folders as $f) {
 }
 
 // 3. فحص إضافات PHP
-if (extension_loaded('pdo_mysql')) {
-    echo "<p style='color:green;'>✅ إضافة MySQL: مفعلة</p>";
+if (extension_loaded('pdo_pgsql')) {
+    echo "<p style='color:green;'>✅ إضافة PostgreSQL (pdo_pgsql): مفعلة</p>";
 } else {
-    echo "<p style='color:red;'>❌ إضافة MySQL: غير مفعلة في السيرفر</p>";
+    echo "<p style='color:red;'>❌ إضافة PostgreSQL (pdo_pgsql): غير مفعلة في السيرفر. هذا هو سبب الخطأ.</p>";
 }
 
 if (extension_loaded('curl')) {

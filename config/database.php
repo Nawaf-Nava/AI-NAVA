@@ -67,8 +67,8 @@ if (!empty($missing)) {
     die("<pre>" . htmlspecialchars($error_msg) . "</pre>");
 }
 
-// 6. بناء DSN (تم تعديل هذا السطر وإزالة لضمان التوافق الداخلي مع سيرفر Railway)
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
+// 6. بناء DSN مع تفعيل SSL الإلزامي للاتصال بـ Railway
+$dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
 log_debug("DSN المبني: pgsql:host=$host;port=$port;dbname=$dbname");
 
 // 7. خيارات الاتصال
@@ -118,9 +118,9 @@ try {
     } elseif (strpos($error_msg_raw, 'database') !== false && strpos($error_msg_raw, 'does not exist') !== false) {
         $diagnosis = "❌ اسم قاعدة البيانات خاطئ\n";
         $diagnosis .= "   تأكد من PGDATABASE\n";
-    } elseif (strpos($error_msg_raw, 'SSL') !== false) {
-        $diagnosis = "❌ مشكلة في SSL/TLS\n";
-        $diagnosis .= "   جرب إضافة sslmode=disable في DSN\n";
+    } elseif (strpos($error_msg_raw, 'SSL') !== false || strpos($error_msg_raw, 'support is not compiled in') !== false) {
+        $diagnosis = "❌ مشكلة في اتصال SSL/TLS\n";
+        $diagnosis .= "   تأكد من أن إضافة pdo_pgsql مفعلة مع دعم SSL في بيئة PHP.\n";
     } else {
         $diagnosis = "❌ خطأ غير معروف - انظر التفاصيل أدناه\n";
     }
