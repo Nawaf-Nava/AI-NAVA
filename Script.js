@@ -1226,12 +1226,7 @@ async function bootstrap() {
 
     // تبديل النافذة المنبثقة للملف الشخصي (Profile Modal)
     if (DOM.profileTrigger) {
-        DOM.profileTrigger.addEventListener('click', () => {
-            if (DOM.profileModal && DOM.overlay) {
-                DOM.profileModal.classList.add('active');
-                DOM.overlay.classList.add('active');
-            }
-        });
+        DOM.profileTrigger.style.display = 'none'; // تعطيل الزر لأنه لم يعد متوافقاً
     }
 
     if (DOM.overlay) {
