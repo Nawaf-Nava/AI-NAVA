@@ -1263,28 +1263,22 @@ async function bootstrap() {
             
             const chatTitle = prompt("أدخل عنوان الجلسة لتشفيرها وحفظها:");
             if (chatTitle) {
-                const messageData = Array.from(messagesElements).map(msg => ({
-                    role: msg.classList.contains('user-message') ? 'user' : 'assistant',
-                    content: msg.querySelector('.msg-content')?.innerText.trim() || ""
-                }));
-
                 try {
-                    const response = await fetch(`secure_vault_v8.php`, {
+                    const response = await fetch(`update_session_title.php`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             session_id: chatState.sessionId, 
-                            title: chatTitle, 
-                            messages: messageData 
+                            title: chatTitle
                         })
                     });
                     
                     if(response.ok) {
-                        console.log("[SUCCESS]: Session encrypted and vaulted.");
+                        Utils.showNotification("تم تحديث عنوان الجلسة بنجاح.", "success");
                         await loadHistoryToSidebar();
                     }
                 } catch(err) {
-                    console.error("[CRITICAL]: Vault connection failed.", err);
+                    console.error("[CRITICAL]: Session title update failed.", err);
                 }
             }
         };

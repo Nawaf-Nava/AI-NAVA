@@ -29,11 +29,7 @@ try {
      * 3. الاستعلام المجهز
      * ملاحظة: تأكد من وجود أعمدة (session_id, title, created_at) في جدولك
      */
-    $query = "SELECT session_uuid, title 
-              FROM sessions 
-              WHERE user_id = ? 
-              ORDER BY created_at DESC 
-              LIMIT 15";
+    $query = "SELECT session_uuid, title FROM sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50";
               
     $stmt = $pdo->prepare($query);
     $stmt->execute([$user_id]);

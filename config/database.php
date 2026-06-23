@@ -6,7 +6,7 @@
  */
 
 // 1. إنشاء مجلد logs إذا لم يكن موجوداً
-$logs_dir = __DIR__ . '/../logs';
+$logs_dir = dirname(__DIR__) . '/logs';
 if (!is_dir($logs_dir)) {
     mkdir($logs_dir, 0755, true);
 }
