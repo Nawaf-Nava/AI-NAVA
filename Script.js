@@ -333,16 +333,9 @@ const Utils = {
         }
     },
 
-    generateSessionId: () => {
-        const id = 'NAVA_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5).toUpperCase();
-        try {
-            sessionStorage.setItem(CONFIG.STORAGE_KEY, id);
-            chatState.sessionId = id;
-            return id;
-        } catch (e) {
-            chatState.sessionId = id;
-            return id;
-        }
+    generateSessionId: () => { // الآن هذه الدالة تقوم فقط بإعادة تعيين المعرف
+        chatState.sessionId = null;
+        console.log("[SYSTEM]: Session ID reset. A new chat will be created on the next message.");
     },
 
     getQueryParams: () => {
@@ -774,6 +767,11 @@ async function processMultimodalRequest(query, botMsgContainer) {
         const data = await response.json();
         
         const reply = data.reply || "";
+        // [REFACTORED] تحديث معرف الجلسة بالمعرف الرقمي الجديد من الخادم
+        if (data.session_id) {
+            chatState.sessionId = data.session_id;
+        }
+
         const searchResults = data.search_results || [];
         
         // فحص ما إذا كان الذكاء الاصطناعي قد قرر توليد صورة
@@ -1483,7 +1481,7 @@ async function loadHistoryToSidebar() {
             if (titleTarget || restoreTarget) {
                 const sID = (titleTarget || restoreTarget).getAttribute('data-session-id');
                 console.log(`[SYSTEM]: Switching context to node: ${sID}`);
-                chatState.sessionId = sID;
+                chatState.sessionId = parseInt(sID, 10); // تحويل المعرف إلى رقم
                 sessionStorage.setItem(CONFIG.STORAGE_KEY, sID);
                 
                 loadHistoryFromServer(); // استدعاء فوري بدون تحديث الصفحة

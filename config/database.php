@@ -22,26 +22,13 @@ function log_debug($message) {
 
 log_debug("=== بدء اختبار الاتصال ===");
 
-// 3. جلب متغيرات البيئة - الأولوية لرابط الاتصال الموحد (DATABASE_URL)
-$database_url = getenv('DATABASE_URL') ?: $_ENV['DATABASE_URL'] ?? $_SERVER['DATABASE_URL'] ?? null;
-
-if ($database_url) {
-    log_debug("تم العثور على DATABASE_URL. جاري تحليل الرابط...");
-    $db_parts = parse_url($database_url);
-    $host   = $db_parts['host'] ?? null;
-    $port   = $db_parts['port'] ?? '5432';
-    $user   = $db_parts['user'] ?? null;
-    $pass   = $db_parts['pass'] ?? null;
-    $dbname = ltrim($db_parts['path'] ?? '', '/');
-} else {
-    log_debug("لم يتم العثور على DATABASE_URL. العودة للمتغيرات الفردية...");
-    // الطريقة القديمة كخيار احتياطي
-    $host   = getenv('PGHOST') ?: $_ENV['PGHOST'] ?? $_SERVER['PGHOST'] ?? null;
-    $dbname = getenv('PGDATABASE') ?: $_ENV['PGDATABASE'] ?? $_SERVER['PGDATABASE'] ?? null;
-    $user   = getenv('POSTGRES_USER') ?: $_ENV['POSTGRES_USER'] ?? $_SERVER['POSTGRES_USER'] ?? null;
-    $pass   = getenv('POSTGRES_PASSWORD') ?: $_ENV['POSTGRES_PASSWORD'] ?? $_SERVER['POSTGRES_PASSWORD'] ?? null;
-    $port   = getenv('PGPORT') ?: $_ENV['PGPORT'] ?? $_SERVER['PGPORT'] ?? '5432';
-}
+// 3. جلب متغيرات البيئة - تم التحديث لاستخدام القيم الجديدة
+log_debug("استخدام إعدادات الاتصال الجديدة...");
+$host   = 'reseau.proxy.rlwy.net';
+$port   = '34072';
+$dbname = 'nava_db';
+$user   = getenv('POSTGRES_USER') ?: $_ENV['POSTGRES_USER'] ?? 'postgres'; // اسم المستخدم الافتراضي
+$pass   = getenv('POSTGRES_PASSWORD') ?: $_ENV['POSTGRES_PASSWORD'] ?? 'UPhWsKbmLKGewiYEKjgfekLyvbDWHhdS'; // كلمة المرور
 
 // 4. تسجيل المتغيرات المستلمة
 log_debug("PGHOST: " . ($host ? "موجود ($host)" : "غير موجود"));

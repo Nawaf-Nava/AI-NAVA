@@ -66,33 +66,37 @@
             try {
                 $pdo->beginTransaction();
 
-                // 1. إنشاء أنواع ENUM المخصصة لـ PostgreSQL
-                $pdo->exec("DO $$ BEGIN CREATE TYPE user_access_level AS ENUM ('ROOT', 'USER'); EXCEPTION WHEN duplicate_object THEN null; END $$;");
-                $pdo->exec("DO $$ BEGIN CREATE TYPE message_role AS ENUM ('user', 'model'); EXCEPTION WHEN duplicate_object THEN null; END $$;");
-                echo "<span class='success'>[+] Custom types 'user_access_level' & 'message_role' verified.</span>\n";
-
-                // 2. إنشاء جدول المستخدمين
+                // 1. إنشاء جدول المستخدمين (users) - Schema جديد
                 $sql_users = "CREATE TABLE IF NOT EXISTS users (
-                                user_id VARCHAR(20) PRIMARY KEY,
-                                username VARCHAR(50) UNIQUE NOT NULL,
-                                password_hash VARCHAR(255) NOT NULL,
-                                bio TEXT,
-                                profile_pic VARCHAR(255) DEFAULT 'default-avatar.png',
-                                access_level user_access_level DEFAULT 'USER',
+                                id SERIAL PRIMARY KEY,
+                                name VARCHAR(100) NOT NULL,
+                                email VARCHAR(150) UNIQUE NOT NULL,
+                                password VARCHAR(255) NOT NULL,
                                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                               );";
                 $pdo->exec($sql_users);
-                echo "<span class='success'>[+] Table 'users' created or already exists.</span>\n";
+                echo "<span class='success'>[+] Table 'users' (new schema) created or already exists.</span>\n";
 
-                // 3. إنشاء جدول الجلسات (Sessions)
-                $sql_sessions = "CREATE TABLE IF NOT EXISTS sessions ( session_uuid VARCHAR(100) PRIMARY KEY, user_id VARCHAR(20), title VARCHAR(255), created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE );";
-                $pdo->exec($sql_sessions);
-                echo "<span class='success'>[+] Table 'sessions' created or already exists.</span>\n";
+                // 2. إنشاء جدول المحادثات (chats) - Schema جديد
+                $sql_chats = "CREATE TABLE IF NOT EXISTS chats (
+                                id SERIAL PRIMARY KEY,
+                                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                                title VARCHAR(255) DEFAULT 'محادثة جديدة',
+                                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                              );";
+                $pdo->exec($sql_chats);
+                echo "<span class='success'>[+] Table 'chats' (new schema) created or already exists.</span>\n";
 
-                // 4. إنشاء جدول الرسائل (Messages)
-                $sql_messages = "CREATE TABLE IF NOT EXISTS messages ( id SERIAL PRIMARY KEY, session_uuid VARCHAR(100), role message_role NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (session_uuid) REFERENCES sessions(session_uuid) ON DELETE CASCADE );";
+                // 3. إنشاء جدول الرسائل (messages) - Schema جديد
+                $sql_messages = "CREATE TABLE IF NOT EXISTS messages (
+                                    id SERIAL PRIMARY KEY,
+                                    chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE,
+                                    sender_type VARCHAR(50) NOT NULL, -- 'user' أو 'ai'
+                                    content TEXT NOT NULL,
+                                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                                 );";
                 $pdo->exec($sql_messages);
-                echo "<span class='success'>[+] Table 'messages' created or already exists.</span>\n";
+                echo "<span class='success'>[+] Table 'messages' (new schema) created or already exists.</span>\n";
 
                 $pdo->commit();
                 echo "\n<span class='success'>[SUCCESS] قاعدة البيانات جاهزة للعمل بنسبة 100%.</span>\n";

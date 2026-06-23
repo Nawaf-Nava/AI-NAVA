@@ -491,31 +491,36 @@ try {
     }
 
     if ($botReply) {
-        // [تصحيح هندسي]: التأكد من وجود الجلسة والمستخدم قبل الحفظ لتجنب خطأ Foreign Key Constraint
+        // [REFACTORED]: منطق الحفظ الجديد المتوافق مع Schema الجديد
         if (isset($_SESSION['user_id'])) {
             try {
                 $pdo->beginTransaction();
+                $user_db_id = $_SESSION['user_db_id']; // استخدام المعرف الرقمي
 
-                // 1. التأكد من وجود الجلسة، وإن لم تكن موجودة، يتم إنشاؤها
-                $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM sessions WHERE session_uuid = ?");
-                $stmtCheck->execute([$session_id]);
-
-                if ($stmtCheck->fetchColumn() == 0) {
-                    // إنشاء سجل الجلسة إذا كانت هذه هي الرسالة الأولى
-                    $stmtInsSession = $pdo->prepare("INSERT INTO sessions (user_id, session_uuid, title) VALUES (?, ?, ?)");
-                    // استخراج عنوان أولي من رسالة المستخدم
-                    $initial_title = mb_substr($data['message'] ?? 'محادثة جديدة', 0, 50);
-                    $stmtInsSession->execute([$_SESSION['user_id'], $session_id, $initial_title]);
+                // 1. التأكد من وجود المحادثة، وإن لم تكن موجودة، يتم إنشاؤها
+                $chat_id = $data['session_id'] ?? null;
+                if (!$chat_id || !is_numeric($chat_id)) {
+                    // إنشاء محادثة جديدة إذا كانت هذه هي الرسالة الأولى
+                    $initial_title = mb_substr($userMessage, 0, 50) ?: 'محادثة جديدة';
+                    $stmtInsChat = $pdo->prepare("INSERT INTO chats (user_id, title) VALUES (?, ?) RETURNING id");
+                    $stmtInsChat->execute([$user_db_id, $initial_title]);
+                    $chat_id = $stmtInsChat->fetchColumn();
+                    $_SESSION['active_chat_id'] = $chat_id; // تحديث الجلسة بالمعرف الجديد
                 }
 
-                // 2. إدخال الرسائل (المستخدم والبوت) تحت معرف الجلسة الموثق
-                $ins = $pdo->prepare("INSERT INTO messages (session_uuid, role, content) VALUES (?, ?, ?)");
-                $ins->execute([$session_id, 'model', $botReply]);
+                // 2. إدخال رسالة المستخدم
+                $insUser = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'user', ?)");
+                $insUser->execute([$chat_id, $userMessage]);
+
+                // 3. إدخال رسالة البوت
+                $insBot = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'ai', ?)");
+                $insBot->execute([$chat_id, $botReply]);
                 
                 $pdo->commit();
             } catch (Exception $dbEx) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
                 error_log("DB_SYNC_ERROR: " . $dbEx->getMessage());
+                $chat_id = null; // إعادة تعيين المعرف في حالة الفشل
             }
         }
 
@@ -523,7 +528,8 @@ try {
             'reply' => $botReply, 
             'status' => 'success',
             'verified_node' => $_SESSION['active_operational_model'],
-            'search_results' => $searchData
+            'search_results' => $searchData,
+            'session_id' => $chat_id // إرجاع المعرف الرقمي الجديد للواجهة
         ]);
     } else {
         // استجابة تفصيلية ذكية تعكس الأخطاء التشخيصية لكافة المحاولات التلقائية لتسهيل تتبع الفشل الفني
