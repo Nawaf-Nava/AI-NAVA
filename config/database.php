@@ -53,7 +53,7 @@ if (!empty($missing)) {
     $error_msg .= "• PGPORT (اختياري)\n\n";
     $error_msg .= "🔗 اذهب إلى: https://railway.app -> Variables\n";
     $error_msg .= "ثم انسخ واللصق القيم بدقة\n\n";
-    $error_msg .= "🛠️ ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
+    $error_msg .= "�️ ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
     
     log_debug("ERROR: " . implode(', ', $missing) . " غير موجودة");
     log_debug("=== انتهى الاختبار بفشل ===\n");

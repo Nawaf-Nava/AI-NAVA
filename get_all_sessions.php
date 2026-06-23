@@ -1,6 +1,6 @@
 <?php
 /**
- * PROJECT: CyberFlux v6.8.5
+ * PROJECT: NAVA AI v9.5
  * MODULE: Session Loader
  */
 
@@ -29,7 +29,7 @@ try {
      * 3. الاستعلام المجهز
      * ملاحظة: تأكد من وجود أعمدة (session_id, title, created_at) في جدولك
      */
-    $query = "SELECT session_uuid, title, created_at 
+    $query = "SELECT session_uuid, title 
               FROM sessions 
               WHERE user_id = ? 
               ORDER BY created_at DESC 

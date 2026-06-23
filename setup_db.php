@@ -61,27 +61,45 @@
             ob_start(); // Start output buffering
 
             require_once 'config/database.php';
+            echo "<span class='success'>[+] Connection to PostgreSQL successful.</span>\n";
 
             try {
-                // 1. إنشاء جدول المستخدمين
-                $sql_users = "CREATE TABLE IF NOT EXISTS users ( user_id VARCHAR(20) PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, bio TEXT, profile_pic VARCHAR(255) DEFAULT 'default-avatar.png', access_level ENUM('ROOT', 'USER') DEFAULT 'USER', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+                $pdo->beginTransaction();
+
+                // 1. إنشاء أنواع ENUM المخصصة لـ PostgreSQL
+                $pdo->exec("DO $$ BEGIN CREATE TYPE user_access_level AS ENUM ('ROOT', 'USER'); EXCEPTION WHEN duplicate_object THEN null; END $$;");
+                $pdo->exec("DO $$ BEGIN CREATE TYPE message_role AS ENUM ('user', 'model'); EXCEPTION WHEN duplicate_object THEN null; END $$;");
+                echo "<span class='success'>[+] Custom types 'user_access_level' & 'message_role' verified.</span>\n";
+
+                // 2. إنشاء جدول المستخدمين
+                $sql_users = "CREATE TABLE IF NOT EXISTS users (
+                                user_id VARCHAR(20) PRIMARY KEY,
+                                username VARCHAR(50) UNIQUE NOT NULL,
+                                password_hash VARCHAR(255) NOT NULL,
+                                bio TEXT,
+                                profile_pic VARCHAR(255) DEFAULT 'default-avatar.png',
+                                access_level user_access_level DEFAULT 'USER',
+                                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                              );";
                 $pdo->exec($sql_users);
                 echo "<span class='success'>[+] Table 'users' created or already exists.</span>\n";
 
-                // 2. إنشاء جدول الجلسات (Sessions)
-                $sql_sessions = "CREATE TABLE IF NOT EXISTS sessions ( session_uuid VARCHAR(100) PRIMARY KEY, user_id VARCHAR(20), title VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+                // 3. إنشاء جدول الجلسات (Sessions)
+                $sql_sessions = "CREATE TABLE IF NOT EXISTS sessions ( session_uuid VARCHAR(100) PRIMARY KEY, user_id VARCHAR(20), title VARCHAR(255), created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE );";
                 $pdo->exec($sql_sessions);
                 echo "<span class='success'>[+] Table 'sessions' created or already exists.</span>\n";
 
-                // 3. إنشاء جدول الرسائل (Messages)
-                $sql_messages = "CREATE TABLE IF NOT EXISTS messages ( id INT AUTO_INCREMENT PRIMARY KEY, session_uuid VARCHAR(100), role ENUM('user', 'model') NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (session_uuid) REFERENCES sessions(session_uuid) ON DELETE CASCADE ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+                // 4. إنشاء جدول الرسائل (Messages)
+                $sql_messages = "CREATE TABLE IF NOT EXISTS messages ( id SERIAL PRIMARY KEY, session_uuid VARCHAR(100), role message_role NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (session_uuid) REFERENCES sessions(session_uuid) ON DELETE CASCADE );";
                 $pdo->exec($sql_messages);
                 echo "<span class='success'>[+] Table 'messages' created or already exists.</span>\n";
 
+                $pdo->commit();
                 echo "\n<span class='success'>[SUCCESS] قاعدة البيانات جاهزة للعمل بنسبة 100%.</span>\n";
                 echo "يمكنك الآن البدء بالتسجيل عبر register.php\n";
 
             } catch (PDOException $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
                 echo "\n<span class='error'>[ERROR] فشل إعداد قاعدة البيانات: " . htmlspecialchars($e->getMessage()) . "</span>\n";
                 echo "تأكد من صحة إعدادات الاتصال في 'config/database.php' (للتطوير المحلي) أو متغيرات البيئة (للاستضافة).\n";
             }
@@ -91,4 +109,3 @@
     </div>
 </body>
 </html>
-

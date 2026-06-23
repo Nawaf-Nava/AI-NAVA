@@ -7,7 +7,7 @@
 /* --- [1] إعدادات النظام الموحدة (Unified System Config) --- */
 const CONFIG = {
     API_URL: "api.php", 
-    HISTORY_URL: "get_all_sessions.php", // تم التعديل للملف الصحيح
+    HISTORY_URL: "get_all_sessions.php", // المسار الموحد لجلب السجلات
     MESSAGES_URL: "get_session_messages.php", // جديد: لجلب محتوى المحادثة
     IMAGE_ENGINE_API: "https://nawafcsgir-cyberflux.hf.space/generate-image",
     MAX_HISTORY: 25,
