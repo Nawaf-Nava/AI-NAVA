@@ -111,7 +111,7 @@ try {
     $_SESSION['username'] = $new_username;
     $_SESSION['profile_pic'] = $profile_pic;
 
-    // النجاح - العودة لصفحة الملف الشخصي مع إشعار نجاح بسيط
+    // النجاح - العودة للصفحة الرئيسية مع إشعار نجاح
     header("Location: index.php?msg=" . urlencode('تم تحديث الملف الشخصي بنجاح.') . "&type=success");
     exit();
 

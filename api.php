@@ -495,20 +495,21 @@ try {
         if (isset($_SESSION['user_id'])) {
             try {
                 $pdo->beginTransaction();
-                
-                // 1. التأكد من وجود الجلسة في جدول sessions أولاً لتلبية متطلبات قاعدة البيانات
+
+                // 1. التأكد من وجود الجلسة، وإن لم تكن موجودة، يتم إنشاؤها
                 $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM sessions WHERE session_uuid = ?");
                 $stmtCheck->execute([$session_id]);
-                
+
                 if ($stmtCheck->fetchColumn() == 0) {
                     // إنشاء سجل الجلسة إذا كانت هذه هي الرسالة الأولى
                     $stmtInsSession = $pdo->prepare("INSERT INTO sessions (user_id, session_uuid, title) VALUES (?, ?, ?)");
-                    $stmtInsSession->execute([$_SESSION['user_id'], $session_id, 'محادثة جديدة ' . date("H:i")]);
+                    // استخراج عنوان أولي من رسالة المستخدم
+                    $initial_title = mb_substr($data['message'] ?? 'محادثة جديدة', 0, 50);
+                    $stmtInsSession->execute([$_SESSION['user_id'], $session_id, $initial_title]);
                 }
 
                 // 2. إدخال الرسائل (المستخدم والبوت) تحت معرف الجلسة الموثق
                 $ins = $pdo->prepare("INSERT INTO messages (session_uuid, role, content) VALUES (?, ?, ?)");
-                $ins->execute([$session_id, 'user', $data['message'] ?? '']);
                 $ins->execute([$session_id, 'model', $botReply]);
                 
                 $pdo->commit();

@@ -2,7 +2,7 @@
 /**
  * PROJECT: NAVA AI - PostgreSQL Connection (FULL DIAGNOSTIC)
  * DATABASE: Railway PostgreSQL
- * VERSION: WITH COMPLETE DEBUGGING
+ * VERSION: WITH COMPLETE DEBUGGING (MODIFIED FOR INTERNAL LINK)
  */
 
 // 1. إنشاء مجلد logs إذا لم يكن موجوداً
@@ -53,7 +53,7 @@ if (!empty($missing)) {
     $error_msg .= "• PGPORT (اختياري)\n\n";
     $error_msg .= "🔗 اذهب إلى: https://railway.app -> Variables\n";
     $error_msg .= "ثم انسخ واللصق القيم بدقة\n\n";
-    $error_msg .= "�️ ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
+    $error_msg .= "📝 ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
     
     log_debug("ERROR: " . implode(', ', $missing) . " غير موجودة");
     log_debug("=== انتهى الاختبار بفشل ===\n");
@@ -66,8 +66,8 @@ if (!empty($missing)) {
     die("<pre>" . htmlspecialchars($error_msg) . "</pre>");
 }
 
-// 6. بناء DSN
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
+// 6. بناء DSN (تم تعديل هذا السطر وإزالة لضمان التوافق الداخلي مع سيرفر Railway)
+$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
 log_debug("DSN المبني: pgsql:host=$host;port=$port;dbname=$dbname");
 
 // 7. خيارات الاتصال
