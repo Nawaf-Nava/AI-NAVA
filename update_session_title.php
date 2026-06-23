@@ -17,20 +17,20 @@ if (!isset($_SESSION['user_id'])) {
 
 $data = json_decode(file_get_contents('php://input'), true);
 $user_id = $_SESSION['user_id'];
-$session_uuid = $data['session_id'] ?? null;
+$chat_id = isset($data['session_id']) ? filter_var($data['session_id'], FILTER_VALIDATE_INT) : null;
 $title = trim($data['title'] ?? '');
 
 // 2. Validation: Ensure all required data is present.
-if (!$session_uuid || empty($title)) {
+if (!$chat_id || empty($title)) {
     http_response_code(400);
     echo json_encode(["status" => "error", "message" => "SESSION_ID_OR_TITLE_MISSING"]);
     exit;
 }
 
 try {
-    // 3. Update the session title in the database, ensuring the user owns the session.
-    $stmt = $pdo->prepare("UPDATE sessions SET title = ? WHERE session_uuid = ? AND user_id = ?");
-    $stmt->execute([$title, $session_uuid, $user_id]);
+    // 3. [REFACTORED] تحديث عنوان المحادثة في جدول chats
+    $stmt = $pdo->prepare("UPDATE chats SET title = ? WHERE id = ? AND user_id = ?");
+    $stmt->execute([$title, $chat_id, $user_id]);
 
     echo json_encode(["status" => "success", "message" => "Session title updated."]);
 } catch (Exception $e) {

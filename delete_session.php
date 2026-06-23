@@ -18,39 +18,23 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-// تنظيف المعرف المستلم لمنع ثغرات الحقن
-$session_uuid = isset($_GET['session_id']) ? preg_replace('/[^A-Za-z0-9_]/', '', $_GET['session_id']) : null;
+$chat_id = isset($_GET['session_id']) ? filter_var($_GET['session_id'], FILTER_VALIDATE_INT) : null;
 
-if (!$session_uuid) {
+if (!$chat_id) {
     http_response_code(400);
     echo json_encode(["status" => "error", "message" => "SESSION_ID_REQUIRED"]);
     exit;
 }
 
 try {
-    // بدء معاملة لضمان حذف كل شيء أو لا شيء (Atomicity)
-    $pdo->beginTransaction();
-
-    // 2. حذف الرسائل المرتبطة بالعقدة أولاً
-    // نستخدم استعلام فرعي للتأكد من أن الرسائل تتبع لجلسة يملكها المستخدم الحالي
-    $deleteMessages = $pdo->prepare("
-        DELETE FROM messages 
-        WHERE session_uuid = ? 
-        AND session_uuid IN (SELECT session_uuid FROM sessions WHERE user_id = ?)
-    ");
-    $deleteMessages->execute([$session_uuid, $user_id]);
-
-    // 3. حذف سجل الجلسة نفسه
-    $deleteSession = $pdo->prepare("DELETE FROM sessions WHERE session_uuid = ? AND user_id = ?");
-    $deleteSession->execute([$session_uuid, $user_id]);
-
-    $pdo->commit();
+    // [REFACTORED]: الحذف المباشر من جدول chats سيقوم بحذف الرسائل تلقائياً بفضل ON DELETE CASCADE
+    $deleteChat = $pdo->prepare("DELETE FROM chats WHERE id = ? AND user_id = ?");
+    $deleteChat->execute([$chat_id, $user_id]);
     
     echo json_encode(["status" => "success", "message" => "NODE_PURGED_PERMANENTLY"]);
 
 } catch (Exception $e) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log("PURGE_ERROR for user $user_id on node $session_uuid: " . $e->getMessage());
+    error_log("PURGE_ERROR for user $user_id on chat $chat_id: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "PURGE_FAILURE"]);
 }

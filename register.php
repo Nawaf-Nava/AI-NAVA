@@ -18,83 +18,28 @@ $success_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
+    $email    = trim($_POST['email']);
     $password = $_POST['password'];
-    $bio      = trim($_POST['bio']);
-    
-    // 1. تحديد مسارات تخزين الملحقات (الصور والمحادثات) فقط
-    $upload_dir = __DIR__ . '/images/uploads/';
-    
-    if (!is_dir($upload_dir) && !mkdir($upload_dir, 0755, true)) {
-        if (empty($msg)) {
-            $msg = "CRITICAL_ERROR: فشل في إنشاء مجلد رفع الملفات. تحقق من الصلاحيات.";
-        }
-    }
-    $profile_pic = "default-avatar.png"; 
 
-    // 2. التحقق من تكرار اسم المستخدم في PostgreSQL
+    // 1. التحقق من تكرار البريد الإلكتروني
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(username) = LOWER(?)");
-        $stmt->execute([$username]);
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER(?)");
+        $stmt->execute([$email]);
         $user_exists = $stmt->fetchColumn() > 0;
 
         if ($user_exists) {
-            $msg = "خطأ: اسم المستخدم مسجل مسبقاً في قاعدة البيانات.";
+            $msg = "خطأ: البريد الإلكتروني مسجل مسبقاً.";
         } else {
-            // 3. توليد معرف مستخدم فريد والتحقق من عدم وجوده في PostgreSQL لمنع التضارب
-            do {
-                $user_id = strval(rand(1000000000, 1999999999));
-                $check_id = $pdo->prepare("SELECT COUNT(*) FROM users WHERE user_id = ?");
-                $check_id->execute([$user_id]);
-                $id_exists = $check_id->fetchColumn() > 0;
-            } while ($id_exists);
-            
-            // 4. معالجة رفع الصورة الشخصية
-            if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
-                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mime_type = finfo_file($finfo, $_FILES['profile_pic']['tmp_name']);
-                finfo_close($finfo);
-                
-                // التأكد من جلب الاسم كسلسلة نصية نقية
-                $raw_filename = $_FILES['profile_pic']['name'];
-                $filename = is_array($raw_filename) ? $raw_filename[0] : $raw_filename;
-                
-                $ext = strtolower(pathinfo((string)$filename, PATHINFO_EXTENSION));
-
-                // تحقق إضافي من نوع MIME الفعلي للملف
-                if (!in_array($mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
-                    $msg = "خطأ: نوع الملف غير مدعوم أو غير صالح.";
-                }
-
-                if (in_array($ext, $allowed)) {
-                    // الهيكلة الإجبارية للاسم
-                    $new_name = "user_" . $user_id . "_" . bin2hex(random_bytes(4)) . "." . $ext;
-                    if (!is_writable($upload_dir)) { 
-                        $msg = "CRITICAL_ERROR: مجلد الرفع غير قابل للكتابة."; 
-                    }
-                    else if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_dir . $new_name)) {
-                        $profile_pic = $new_name; 
-                    }
-                }
-            }
-
-            // التحقق إذا كان هذا أول مستخدم (تعيين ROOT تلقائياً)
-            $countStmt = $pdo->query("SELECT COUNT(*) FROM users");
-            $access_level = ($countStmt->fetchColumn() == 0) ? 'ROOT' : 'USER';
-
-            // 5. إدخال البيانات في PostgreSQL
-            $sql = "INSERT INTO users (user_id, username, password_hash, bio, profile_pic, access_level) 
-                    VALUES (:uid, :uname, :pass, :bio, :pic, :lvl)";
+            // 2. إدخال البيانات في Schema الجديد
+            $sql = "INSERT INTO users (name, email, password) VALUES (:name, :email, :pass)";
             try {
                 $stmt = $pdo->prepare($sql);
                 $result = $stmt->execute([
-                    ':uid'   => $user_id,
-                    ':uname' => $username,
+                    ':name'  => $username,
+                    ':email' => $email,
                     ':pass'  => password_hash($password, PASSWORD_BCRYPT),
-                    ':bio'   => $bio,
-                    ':pic'   => $profile_pic,
-                    ':lvl'   => $access_level
                 ]);
+                $user_id = $pdo->lastInsertId(); // جلب المعرف الرقمي الجديد
             } catch (PDOException $e) {
                 error_log("REGISTER_DATABASE_ERROR: " . $e->getMessage());
                 $msg = "DATABASE_INSERT_ERROR: فشل في إدخال البيانات. راجع السجلات.";
@@ -103,12 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($result) {
                 session_regenerate_id(true);
-                // تفعيل الجلسة الآمنة تلقائياً للمستخدم الموثق
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['username'] = $username;
-                $_SESSION['role'] = $access_level;
-                $_SESSION['bio'] = $bio;
-                $_SESSION['profile_pic'] = $profile_pic;
+                // تفعيل الجلسة بالبيانات الجديدة
+                $_SESSION['user_id']     = $user_id;
+                $_SESSION['user_db_id']  = $user_id;
+                $_SESSION['username']    = $username;
+                $_SESSION['email']       = $email;
+                $_SESSION['bio']         = '';
+                $_SESSION['profile_pic'] = 'default-avatar.png';
 
                 $success_msg = "تمت مزامنة العقدة وإنشاء ملف الهوية بنجاح! جاري الانتقال للوحة التحكم...";
                 
@@ -194,23 +140,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" enctype="multipart/form-data" autocomplete="off">
             <div class="input-group">
-                <label>[ INITIALIZE_NODE_NAME ]</label>
+                <label>[ USERNAME ]</label>
                 <i class="fa-solid fa-user-gear"></i>
                 <input type="text" name="username" placeholder="اسم المستخدم" required>
             </div>
             <div class="input-group">
-                <label>[ ASSIGN_ACCESS_KEY ]</label>
+                <label>[ EMAIL ADDRESS ]</label>
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" name="email" placeholder="البريد الإلكتروني" required>
+            </div>
+            <div class="input-group">
+                <label>[ PASSWORD ]</label>
                 <i class="fa-solid fa-key"></i>
                 <input type="password" name="password" placeholder="كلمة المرور التشفيرية" required>
-            </div>
-            <div class="input-group">
-                <label>[ CRYPTO_BIO_IDENTIFIER ]</label>
-                <i class="fa-solid fa-fingerprint" style="bottom: 45px;"></i>
-                <textarea name="bio" placeholder="وصف مهاراتك السيبرانية أو تخصصك..." rows="2"></textarea>
-            </div>
-            <div class="input-group">
-                <label>[ AVATAR_VECTOR_UPLOAD ]</label>
-                <input type="file" name="profile_pic" accept="image/*" style="border: 1px dashed var(--border-color); padding: 8px 10px; color: var(--text-muted);">
             </div>
             <button type="submit" class="btn-submit">INITIALIZE_CORE_ACCOUNT</button>
         </form>

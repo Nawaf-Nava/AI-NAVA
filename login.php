@@ -27,40 +27,35 @@ require_once 'config/database.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
+    // تم التغيير لاستخدام البريد الإلكتروني لتسجيل الدخول
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     
     try {
-        // [1] البحث عن المستخدم في PostgreSQL
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE LOWER(username) = LOWER(?)");
-        $stmt->execute([$username]);
+        // [1] البحث عن المستخدم عبر البريد الإلكتروني في Schema الجديد
+        $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE LOWER(email) = LOWER(?)");
+        $stmt->execute([$email]);
         $target_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$target_user) {
-            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.";
+            $error = "خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.";
         } 
-        // [2] التحقق من كلمة المرور
-        elseif (!password_verify($password, $target_user['password_hash'])) {
-            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.";
+        // [2] التحقق من كلمة المرور (العمود الجديد اسمه 'password')
+        elseif (!password_verify($password, $target_user['password'])) {
+            $error = "خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.";
         } 
         else {
             // النجاح
             session_regenerate_id(true);
             
-            // [3] صيانة المجلدات: التأكد من وجود مسارات التخزين
-            $default_dir_permissions = 0755;
-            $upload_dir = __DIR__ . '/images/uploads/';
-
-            if (!is_dir($upload_dir)) mkdir($upload_dir, $default_dir_permissions, true);
-            
-            // [4] تعيين بيانات الجلسة مباشرة من PostgreSQL
-            $user_pic = !empty($target_user['profile_pic']) ? $target_user['profile_pic'] : 'default-avatar.png';
-
-            $_SESSION['user_id']     = $target_user['user_id'];
-            $_SESSION['username']    = $target_user['username'];
-            $_SESSION['role']        = $target_user['access_level'];
-            $_SESSION['bio']         = $target_user['bio'];
-            $_SESSION['profile_pic'] = $user_pic;
+            // [3] تعيين بيانات الجلسة من Schema الجديد
+            $_SESSION['user_id']     = $target_user['id']; // المعرف الرقمي الجديد
+            $_SESSION['user_db_id']  = $target_user['id']; // معرف إضافي للاستخدام في api.php
+            $_SESSION['username']    = $target_user['name'];
+            $_SESSION['email']       = $target_user['email'];
+            // تعيين قيم افتراضية للمفاتيح القديمة لضمان عدم حدوث أخطاء
+            $_SESSION['bio']         = '';
+            $_SESSION['profile_pic'] = 'default-avatar.png';
 
             header("Location: index.php");
             exit();
@@ -134,7 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         
         <form method="POST">
-            <input type="text" name="username" placeholder="Username (NODE_ID)" required autocomplete="off">
+            <!-- تم التغيير إلى البريد الإلكتروني -->
+            <input type="email" name="email" placeholder="Email Address" required autocomplete="off">
             <input type="password" name="password" placeholder="Password (ACCESS_KEY)" required>
             <button type="submit">INITIALIZE_SESSION</button>
         </form>

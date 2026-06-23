@@ -9,17 +9,17 @@ if (!isset($_SESSION['user_id']) || !isset($_GET['session_id'])) {
     exit;
 }
 
-$session_uuid = preg_replace('/[^A-Za-z0-9_]/', '', $_GET['session_id']);
+$chat_id = filter_var($_GET['session_id'], FILTER_VALIDATE_INT);
 
 // إعدادات التحميل المتأخر
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20; // جلب 20 رسالة فقط في كل مرة
 $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0; // نقطة البداية
 
 try {
-    // [تحسين هندسي]: الربط الصريح للأنواع (Explicit Type Binding) لضمان أفضل أداء لمحرك MySQL
-    $stmt = $pdo->prepare("SELECT role, content FROM messages WHERE session_uuid = :sid ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
+    // [REFACTORED]: تم التحديث ليتوافق مع Schema الجديد
+    $stmt = $pdo->prepare("SELECT sender_type as role, content FROM messages WHERE chat_id = :cid ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
     
-    $stmt->bindValue(':sid', $session_uuid, PDO::PARAM_STR);
+    $stmt->bindValue(':cid', $chat_id, PDO::PARAM_INT);
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     
