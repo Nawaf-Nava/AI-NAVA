@@ -293,7 +293,13 @@ const Utils = {
             if (['bash', 'sh', 'shell', 'linux'].includes(lang)) endpoint = 'run_shell.php';
             
             if (lang === 'javascript') {
-                try { eval(code); output = "JS_EVAL_SUCCESS: Check console for logs."; } catch(e) { output = "JS_ERROR: " + e.message; }
+                // تم إزالة eval() لأسباب أمنية.
+                output = "JS_EVAL_DISABLED: JavaScript execution in the browser is disabled for security reasons. Please run the code in your browser's console.";
+                Utils.showNotification("تم تعطيل تشغيل JavaScript مباشرةً للأمان.", "warning");
+                // يمكنك عرض الكود في نافذة جديدة ليقوم المستخدم بنسخه
+                // const win = window.open('', '_blank');
+                // win.document.write('<pre>' + Utils.escapeHtml(code) + '</pre>');
+                // win.document.close();
             } else {
                 const res = await fetch(endpoint, {
                     method: 'POST',

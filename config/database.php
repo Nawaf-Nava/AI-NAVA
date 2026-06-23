@@ -58,7 +58,12 @@ if (!empty($missing)) {
     log_debug("ERROR: " . implode(', ', $missing) . " غير موجودة");
     log_debug("=== انتهى الاختبار بفشل ===\n");
     
-    die($error_msg);
+    // التحقق من بيئة التشغيل قبل طباعة الأخطاء التفصيلية
+    if (getenv('APP_ENV') === 'production') {
+        http_response_code(500);
+        die("Database configuration error. Please contact the administrator.");
+    }
+    die("<pre>" . htmlspecialchars($error_msg) . "</pre>");
 }
 
 // 6. بناء DSN
@@ -138,7 +143,11 @@ try {
     $error_message .= "3. انسخ جميع متغيرات البيئة\n";
     $error_message .= "4. حدثها في ملف .env أو في إعدادات الخادم\n";
     
-    die($error_message);
+    if (getenv('APP_ENV') === 'production') {
+        http_response_code(500);
+        die("Database connection failed. Please contact the administrator.");
+    }
+    die("<pre>" . htmlspecialchars($error_message) . "</pre>");
 }
 
 // تم الاتصال بنجاح!

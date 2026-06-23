@@ -526,8 +526,9 @@ try {
         ]);
     } else {
         // استجابة تفصيلية ذكية تعكس الأخطاء التشخيصية لكافة المحاولات التلقائية لتسهيل تتبع الفشل الفني
-        $errDetail = !empty($diagnosticsErrors) ? " | Diagnostics: " . implode(" || ", $diagnosticsErrors) : "No operational open models responded.";
-        echo json_encode(['reply' => "⚠️ [CORE_ERROR]: AUTOMATIC_MODEL_DISCOVERY_FAILED" . $errDetail, 'status' => 'error']);
+        $errDetail = !empty($diagnosticsErrors) ? implode(" || ", $diagnosticsErrors) : "No operational open models responded.";
+        error_log("GEMINI_API_FAILURE: " . $errDetail);
+        echo json_encode(['reply' => "⚠️ [خطأ في النواة]: حدث خطأ أثناء الاتصال بمحركات الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.", 'status' => 'error']);
     }
 
 } catch (Exception $e) {
