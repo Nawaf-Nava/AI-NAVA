@@ -2,7 +2,7 @@
 /**
  * PROJECT: NAVA AI - PostgreSQL Connection (FULL DIAGNOSTIC)
  * DATABASE: Railway PostgreSQL
- * VERSION: WITH COMPLETE DEBUGGING (MODIFIED FOR INTERNAL LINK)
+ * VERSION: DIRECT URL CONNECTION (FIXED)
  */
 
 // 1. إنشاء مجلد logs إذا لم يكن موجوداً
@@ -22,53 +22,39 @@ function log_debug($message) {
 
 log_debug("=== بدء اختبار الاتصال ===");
 
-// 3. جلب متغيرات البيئة - تم التحديث لاستخدام القيم الجديدة
-log_debug("استخدام إعدادات الاتصال الجديدة...");
-$host   = 'reseau.proxy.rlwy.net';
-$port   = '34072';
-$dbname = 'nava_db';
-$user   = getenv('POSTGRES_USER') ?: $_ENV['POSTGRES_USER'] ?? 'postgres'; // اسم المستخدم الافتراضي
-$pass   = getenv('POSTGRES_PASSWORD') ?: $_ENV['POSTGRES_PASSWORD'] ?? 'UPhWsKbmLKGewiYEKjgfekLyvbDWHhdS'; // كلمة المرور
+// 3. وضع رابط الاتصال المباشر الذي نجح في VS Code
+$db_url = "postgresql://postgres:UPhWsKbmLKGewiYEKjgfekLyvbDWHhdS@reseau.proxy.rlwy.net:34072/railway";
 
-// 4. تسجيل المتغيرات المستلمة
-log_debug("PGHOST: " . ($host ? "موجود ($host)" : "غير موجود"));
-log_debug("PGDATABASE: " . ($dbname ? "موجود ($dbname)" : "غير موجود"));
-log_debug("POSTGRES_USER: " . ($user ? "موجود ($user)" : "غير موجود"));
-log_debug("POSTGRES_PASSWORD: " . ($pass ? "موجود (مخفي)" : "غير موجود"));
+log_debug("استخراج إعدادات الاتصال من الرابط المباشر...");
+$parsed_url = parse_url($db_url);
+
+$host   = $parsed_url['host'];
+$port   = $parsed_url['port'];
+$dbname = ltrim($parsed_url['path'], '/'); 
+$user   = $parsed_url['user'];
+$pass   = $parsed_url['pass'];
+
+// 4. تسجيل المتغيرات المستخرجة للتأكد
+log_debug("PGHOST: $host");
+log_debug("PGDATABASE: $dbname");
+log_debug("POSTGRES_USER: $user");
 log_debug("PGPORT: $port");
 
-// 5. التحقق من وجود كل المتغيرات المطلوبة
+// 5. التحقق من وجود البيانات المستخرجة
 $missing = [];
-if (!$host) $missing[] = 'PGHOST';
-if (!$dbname) $missing[] = 'PGDATABASE';
-if (!$user) $missing[] = 'POSTGRES_USER';
-if (!$pass) $missing[] = 'POSTGRES_PASSWORD';
+if (!$host) $missing[] = 'HOST';
+if (!$dbname) $missing[] = 'DATABASE';
+if (!$user) $missing[] = 'USER';
+if (!$pass) $missing[] = 'PASSWORD';
 
 if (!empty($missing)) {
-    $error_msg = "❌ متغيرات بيئة مفقودة: " . implode(', ', $missing) . "\n\n";
-    $error_msg .= "📋 المتغيرات المطلوبة في Railway:\n";
-    $error_msg .= "• PGHOST\n";
-    $error_msg .= "• PGDATABASE\n";
-    $error_msg .= "• POSTGRES_USER\n";
-    $error_msg .= "• POSTGRES_PASSWORD\n";
-    $error_msg .= "• PGPORT (اختياري)\n\n";
-    $error_msg .= "🔗 اذهب إلى: https://railway.app -> Variables\n";
-    $error_msg .= "ثم انسخ واللصق القيم بدقة\n\n";
-    $error_msg .= "📝 ملف السجل: " . str_replace(__DIR__, '', $debug_log) . "\n";
-    
-    log_debug("ERROR: " . implode(', ', $missing) . " غير موجودة");
-    log_debug("=== انتهى الاختبار بفشل ===\n");
-    
-    // التحقق من بيئة التشغيل قبل طباعة الأخطاء التفصيلية
-    if (getenv('APP_ENV') === 'production') {
-        http_response_code(500);
-        die("Database configuration error. Please contact the administrator.");
-    }
+    $error_msg = "❌ فشل استخراج بيانات الاتصال من الرابط المباشر: " . implode(', ', $missing) . "\n\n";
+    log_debug("ERROR: بيانات مفقودة في الرابط");
     die("<pre>" . htmlspecialchars($error_msg) . "</pre>");
 }
 
-// 6. بناء DSN مع تفعيل SSL الإلزامي للاتصال بـ Railway
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
+// 6. بناء DSN للاتصال المباشر عبر المنفذ الخارجي لـ Railway
+$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
 log_debug("DSN المبني: pgsql:host=$host;port=$port;dbname=$dbname");
 
 // 7. خيارات الاتصال
@@ -92,7 +78,10 @@ try {
     log_debug("✓ الوقت من قاعدة البيانات: " . $result['now']);
     log_debug("=== انتهى الاختبار بنجاح ===\n");
     
-    // الاتصال نجح - نتابع العمل
+    // طباعة رسالة نجاح واضحة على الشاشة عند فتح الملف للتأكد
+    echo "<div style='background-color:#d4edda; color:#155724; padding:20px; text-align:center; font-family:arial; border-radius:5px; margin:20px; border: 1px solid #c3e6cb;'>";
+    echo "<h2>🎉 NAVA AI: تم الاتصال بقاعدة البيانات بنجاح باستخدام الرابط المباشر!</h2>";
+    echo "</div>";
     
 } catch (PDOException $e) {
     $error_code = $e->getCode();
@@ -103,30 +92,20 @@ try {
     log_debug("Error Message: $error_msg_raw");
     log_debug("=== انتهى الاختبار بفشل ===\n");
     
-    // تشخيص الخطأ بناءً على رمز الخطأ
+    // تشخيص الخطأ تلقائياً بناءً على رسالة PostgreSQL الأصلية
     $diagnosis = "";
-    
-    if (strpos($error_msg_raw, 'could not translate host name') !== false) {
-        $diagnosis = "❌ Hostname غير صحيح أو غير موجود\n";
-        $diagnosis .= "   تأكد من قيمة PGHOST من Railway\n";
+    if (strpos($error_msg_raw, 'password authentication failed') !== false) {
+        $diagnosis = "❌ كلمة المرور في الرابط غير صحيحة أو تم تغييرها من Railway.\n";
     } elseif (strpos($error_msg_raw, 'Connection refused') !== false) {
-        $diagnosis = "❌ قاعدة البيانات لا ترد على الطلب\n";
-        $diagnosis .= "   تحقق من أن PostgreSQL مشغل في Railway\n";
-    } elseif (strpos($error_msg_raw, 'password authentication failed') !== false) {
-        $diagnosis = "❌ كلمة المرور خاطئة\n";
-        $diagnosis .= "   تأكد من POSTGRES_PASSWORD\n";
+        $diagnosis = "❌ السيرفر الخارجي لا يستجيب، قد يكون المنفذ (Port) تغير من Railway.\n";
     } elseif (strpos($error_msg_raw, 'database') !== false && strpos($error_msg_raw, 'does not exist') !== false) {
-        $diagnosis = "❌ اسم قاعدة البيانات خاطئ\n";
-        $diagnosis .= "   تأكد من PGDATABASE\n";
-    } elseif (strpos($error_msg_raw, 'SSL') !== false || strpos($error_msg_raw, 'support is not compiled in') !== false) {
-        $diagnosis = "❌ مشكلة في اتصال SSL/TLS\n";
-        $diagnosis .= "   تأكد من أن إضافة pdo_pgsql مفعلة مع دعم SSL في بيئة PHP.\n";
+        $diagnosis = "❌ اسم قاعدة البيانات المكتوب في الرابط غير موجود داخل السيرفر.\n";
     } else {
-        $diagnosis = "❌ خطأ غير معروف - انظر التفاصيل أدناه\n";
+        $diagnosis = "❌ خطأ في الاتصال بالشبكة أو إعدادات خادم PHP.\n";
     }
     
     $error_message = "🔴 فشل الاتصال بقاعدة البيانات\n\n";
-    $error_message .= "📊 التفاصيل:\n";
+    $error_message .= "📊 التفاصيل المستخرجة من الرابط:\n";
     $error_message .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     $error_message .= "Host: $host\n";
     $error_message .= "Database: $dbname\n";
@@ -134,22 +113,12 @@ try {
     $error_message .= "Port: $port\n\n";
     $error_message .= "🔍 التشخيص:\n";
     $error_message .= $diagnosis . "\n";
-    $error_message .= "📝 الخطأ الأصلي:\n";
-    $error_message .= substr($error_msg_raw, 0, 200) . "...\n\n";
-    $error_message .= "📄 ملف السجل الكامل:\n";
-    $error_message .= $debug_log . "\n\n";
-    $error_message .= "🚀 الحل:\n";
-    $error_message .= "1. اذهب إلى https://railway.app\n";
-    $error_message .= "2. افتح المشروع الخاص بك\n";
-    $error_message .= "3. انسخ جميع متغيرات البيئة\n";
-    $error_message .= "4. حدثها في ملف .env أو في إعدادات الخادم\n";
+    $error_message .= "📝 الخطأ الأصلي المتلقى من السيرفر:\n";
+    $error_message .= $error_msg_raw . "\n\n";
+    $error_message .= "📄 ملف السجل الكامل: $debug_log\n";
     
-    if (getenv('APP_ENV') === 'production') {
-        http_response_code(500);
-        die("Database connection failed. Please contact the administrator.");
-    }
     die("<pre>" . htmlspecialchars($error_message) . "</pre>");
 }
 
-// تم الاتصال بنجاح!
+// تم الاتصال بنجاح ويمكن لبقية كود المشروع استخدام كائن $pdo الآن!
 ?>
