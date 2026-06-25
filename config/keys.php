@@ -7,7 +7,7 @@
 
 // مفتاح الـ API الخاص بنواف - ⚠️ استبدله بمفتاح صالح أو استخدم متغير بيئة
 $normal_gemini_api_key = getenv('GEMINI_API_KEY') ?: "AQ.Ab8RN6JR-4zbpAm063928hrmIv-F9ItFQEHK2-abqC1YgHBOSw"; // القيمة الافتراضية فارغة لفرض استخدام متغيرات البيئة
-$deep_mode_gemini_api_key = getenv('DEEP_MODE_GEMINI_API_KEY') ?: ""; // القيمة الافتراضية فارغة
+$deep_mode_gemini_api_key = getenv('DEEP_MODE_GEMINI_API_KEY') ?: "AQ.Ab8RN6IfWZsHa96FMt3A0U17wg1iY4_ucO3x9JKD59y1T7uRvA"; // القيمة الافتراضية فارغة
 
 // --- [إعدادات محرك البحث المستقل] ---
 $google_search_api_key = getenv('GOOGLE_SEARCH_API_KEY') ?: ""; // القيمة الافتراضية فارغة
