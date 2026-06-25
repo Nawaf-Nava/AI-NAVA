@@ -18,39 +18,31 @@ $success_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $email    = trim($_POST['email']);
     $password = $_POST['password'];
+    $result = false;
 
-    // 1. التحقق من تكرار البريد الإلكتروني
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER(?)");
-        $stmt->execute([$email]);
-        $user_exists = $stmt->fetchColumn() > 0;
         // التحقق من تكرار اسم المستخدم
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE LOWER(name) = LOWER(?)");
         $stmt->execute([$username]);
         $username_exists = $stmt->fetchColumn() > 0;
 
-        if ($user_exists) {
-            $msg = "خطأ: البريد الإلكتروني مسجل مسبقاً.";
         if ($username_exists) {
             $msg = "خطأ: اسم المستخدم مسجل مسبقاً.";
         } else {
             // 2. إدخال البيانات في Schema الجديد
-            $sql = "INSERT INTO users (name, email, password) VALUES (:name, :email, :pass)";
-            $sql = "INSERT INTO users (name, password) VALUES (:name, :pass)"; // إزالة email
+            $sql = "INSERT INTO users (name, password) VALUES (:name, :pass)";
             try {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     ':name'  => $username,
-                    ':email' => $email,
                     ':pass'  => password_hash($password, PASSWORD_BCRYPT),
                 ]);
                 $user_id = $pdo->lastInsertId(); // جلب المعرف الرقمي الجديد
                 $result = $user_id > 0;
             } catch (PDOException $e) {
                 error_log("REGISTER_DATABASE_ERROR: " . $e->getMessage());
-                $msg = "DATABASE_INSERT_ERROR: فشل في إدخال البيانات. راجع السجلات.";
+                $msg = "DATABASE_INSERT_ERROR: فشل في إنشاء الحساب. راجع السجلات.";
             }
 
             if ($result) {
@@ -59,24 +51,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id']     = $user_id;
                 $_SESSION['user_db_id']  = $user_id;
                 $_SESSION['username']    = $username;
-                $_SESSION['email']       = $email;
-                $_SESSION['username']    = $username; // اسم المستخدم
                 $_SESSION['bio']         = ''; // Bio is empty on registration
                 $_SESSION['profile_pic'] = 'default-avatar.png'; // Default avatar
                 $_SESSION['access_level']= 'USER'; // Default access level
                 $success_msg = "تمت مزامنة العقدة وإنشاء ملف الهوية بنجاح! جاري الانتقال للوحة التحكم...";
                 
-                // التأكد من إرسال الـ Headers قبل أي مخرجات
                 echo "<script>window.location.href = 'index.php?msg=" . urlencode($success_msg) . "&type=success';</script>";
                 exit();
-            } else {
-                echo "<script>window.location.href = 'index.php?msg=" . urlencode($msg) . "&type=error';</script>";
-                exit();
-            }
+            } elseif (empty($msg)) {
+                $msg = "فشل إنشاء الحساب لسبب غير معروف.";
+            } 
         }
     } catch (PDOException $e) {
         error_log("REGISTER_DB_OPERATION_ERROR: " . $e->getMessage());
         $msg = "خطأ في قاعدة البيانات. يرجى المحاولة لاحقاً.";
+    }
+
+    // إذا حدث خطأ، أعد التوجيه مع الرسالة
+    if ($msg) {
+        echo "<script>window.location.href = 'index.php?msg=" . urlencode($msg) . "&type=error';</script>";
+        exit();
     }
 }
 ?>

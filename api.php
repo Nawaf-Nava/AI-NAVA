@@ -247,13 +247,19 @@ function navaFetchMultipleContents($urls) {
 
 // تحليل الروابط تلقائياً
 if (preg_match('/https?:\/\/[^\s]+/', $userMessage, $matches)) {
-    $siteData = navaFetchContent($matches[0]);
+    $url = $matches[0];
+    $siteData = navaFetchContent($url);
     if ($siteData === "Invalid or restricted URL.") {
         // إذا كان الرابط غير صالح أو مقيد، لا نضيف بيانات التحليل
         // ويمكن إضافة رسالة خطأ للمستخدم هنا إذا لزم الأمر
-        error_log("Attempted to fetch invalid/restricted URL: " . $matches[0]);
+        error_log("Attempted to fetch invalid/restricted URL: " . $url);
     } else {
-    $userMessage .= "\n\n[LINK_ANALYSIS_DATA]:\n" . $siteData;
+        $userMessage .= "\n\n[LINK_ANALYSIS_DATA]:\n" . $siteData;
+        // [FIX] تفعيل الاستطلاع السلبي عند وجود رابط في الوضع العميق لتوفير البيانات التي يتوقعها الـ Prompt
+        if ($isDeepMode) {
+            $reconData = navaPassiveRecon($url);
+            if (!empty($reconData)) $userMessage .= "\n\n[PASSIVE_RECON_DATA]:\n" . $reconData;
+        }
     }
 }
 
@@ -342,7 +348,7 @@ try {
     }
 
     // مصفوفة الحماية القصوى للتأمين التلقائي في حال تعذر جلب قائمة الـ API الخارجية بالكامل
-    $fallbackDefaults = ["models/gemini-1.5-flash", "models/gemini-2.5-flash", "models/gemini-1.5-pro"];
+    $fallbackDefaults = ["models/gemini-1.5-flash-latest", "models/gemini-1.5-pro-latest"];
     if (empty($availableModels)) {
         $availableModels = $fallbackDefaults;
     } else {
