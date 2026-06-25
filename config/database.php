@@ -22,10 +22,14 @@ function log_debug($message) {
 
 log_debug("=== بدء اختبار الاتصال ===");
 
-// 3. وضع رابط الاتصال المباشر الذي نجح في VS Code
-$db_url = "postgresql://postgres:UPhWsKbmLKGewiYEKjgfekLyvbDWHhdS@reseau.proxy.rlwy.net:34072/railway";
+// 3. [محسن] قراءة رابط الاتصال من متغيرات البيئة (الأفضل للإنتاج) أو استخدام رابط مباشر كخيار احتياطي للتطوير
+$db_url = getenv('DATABASE_URL');
+if ($db_url === false) {
+    log_debug("متغير البيئة DATABASE_URL غير موجود، سيتم استخدام الرابط المباشر كخيار احتياطي.");
+    $db_url = "postgresql://postgres:UPhWsKbmLKGewiYEKjgfekLyvbDWHhdS@reseau.proxy.rlwy.net:34072/railway"; // ⚠️ للتطوير المحلي فقط
+}
 
-log_debug("استخراج إعدادات الاتصال من الرابط المباشر...");
+log_debug("استخراج إعدادات الاتصال من الرابط: " . (getenv('DATABASE_URL') ? 'DATABASE_URL' : 'Fallback URL'));
 $parsed_url = parse_url($db_url);
 
 $host   = $parsed_url['host'];
@@ -77,11 +81,6 @@ try {
     log_debug("✓ الاتصال نجح!");
     log_debug("✓ الوقت من قاعدة البيانات: " . $result['now']);
     log_debug("=== انتهى الاختبار بنجاح ===\n");
-    
-    // طباعة رسالة نجاح واضحة على الشاشة عند فتح الملف للتأكد
-    echo "<div style='background-color:#d4edda; color:#155724; padding:20px; text-align:center; font-family:arial; border-radius:5px; margin:20px; border: 1px solid #c3e6cb;'>";
-    echo "<h2>🎉 NAVA AI: تم الاتصال بقاعدة البيانات بنجاح باستخدام الرابط المباشر!</h2>";
-    echo "</div>";
     
 } catch (PDOException $e) {
     $error_code = $e->getCode();

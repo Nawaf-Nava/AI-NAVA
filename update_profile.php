@@ -12,11 +12,14 @@ if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// [أمان] التحقق من توكن CSRF لمنع الهجمات العابرة للمواقع
-if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    header("Location: index.php?status=error&msg=" . urlencode("خطأ في التحقق من صحة الطلب (CSRF)."));
+// [أمان] التحقق من توكن CSRF لمنع الهجمات العابرة للمواقع (Cross-Site Request Forgery)
+if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    header("Location: index.php?msg=" . urlencode("خطأ في التحقق من صحة الطلب (CSRF).") . "&type=error");
     exit();
 }
+
+// [أمان] تجديد الـ token بعد استخدامه لمنع هجمات الإعادة
+unset($_SESSION['csrf_token']);
 
 $user_id = $_SESSION['user_id'];
 $new_username = !empty($_POST['username']) ? trim($_POST['username']) : $_SESSION['username'];
@@ -27,23 +30,23 @@ $profile_pic = $_SESSION['profile_pic']; // القيمة الافتراضية ه
 if (!is_dir($upload_dir) && !mkdir($upload_dir, 0755, true)) { // تغيير الصلاحيات
     // يجب تسجيل الخطأ هنا وعدم عرضه للمستخدم مباشرة
     error_log("CRITICAL_ERROR: فشل في إنشاء مجلد رفع الملفات. تحقق من الصلاحيات.");
-    header("Location: index.php?status=error&msg=" . urlencode("فشل في إنشاء مجلد الرفع."));
+    header("Location: index.php?msg=" . urlencode("فشل في إنشاء مجلد الرفع.") . "&type=error");
     exit();
 }
 
 try {
     // جلب اسم الصورة القديمة من قاعدة البيانات لضمان الدقة
-    $stmt_old_pic = $pdo->prepare("SELECT profile_pic FROM users WHERE user_id = :uid");
-    $stmt_old_pic->execute([':uid' => $user_id]);
+    $stmt_old_pic = $pdo->prepare("SELECT profile_pic FROM users WHERE id = :id");
+    $stmt_old_pic->execute([':id' => $user_id]);
     $old_profile_pic_filename = $stmt_old_pic->fetchColumn();
-    $old_data = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
+    $old_data = $pdo->prepare("SELECT password FROM users WHERE id = ?");
     $old_data->execute([$user_id]);
     $user_record = $old_data->fetch();
 
     // --- [1] معالجة طلبات الحذف الفردي للمدخلات ---
     if (isset($_POST['clear_field'])) {
         if ($_POST['clear_field'] === 'bio') {
-            $pdo->prepare("UPDATE users SET bio = '' WHERE user_id = ?")->execute([$user_id]);
+            $pdo->prepare("UPDATE users SET bio = '' WHERE id = ?")->execute([$user_id]);
             $_SESSION['bio'] = '';
             header("Location: index.php?msg=" . urlencode('تم حذف السيرة الذاتية.') . "&type=success");
             exit();
@@ -52,7 +55,7 @@ try {
             if ($old_profile_pic_filename !== 'default-avatar.png' && file_exists($upload_dir . $old_profile_pic_filename)) {
                 unlink($upload_dir . $old_profile_pic_filename);
             }
-            $pdo->prepare("UPDATE users SET profile_pic = 'default-avatar.png' WHERE user_id = ?")->execute([$user_id]);
+            $pdo->prepare("UPDATE users SET profile_pic = 'default-avatar.png' WHERE id = ?")->execute([$user_id]);
             $_SESSION['profile_pic'] = 'default-avatar.png';
             header("Location: index.php?msg=" . urlencode('تم استعادة الصورة الافتراضية.') . "&type=success");
             exit();
@@ -89,11 +92,11 @@ try {
 
     // --- [3] معالجة تغيير كلمة المرور ---
     $password_sql = "";
-    $params = [':bio' => $new_bio, ':pic' => $profile_pic, ':uid' => $user_id, ':uname' => $new_username];
+    $params = [':bio' => $new_bio, ':pic' => $profile_pic, ':id' => $user_id, ':name' => $new_username];
     
     if (!empty($_POST['new_password']) && !empty($_POST['current_password'])) {
-        if (password_verify($_POST['current_password'], $user_record['password_hash'])) {
-            $password_sql = ", password_hash = :pass";
+        if (password_verify($_POST['current_password'], $user_record['password'])) {
+            $password_sql = ", password = :pass";
             $params[':pass'] = password_hash($_POST['new_password'], PASSWORD_BCRYPT);
         } else {
             header("Location: index.php?msg=" . urlencode("كلمة المرور الحالية غير صحيحة.") . "&type=error");
@@ -101,8 +104,8 @@ try {
         }
     }
 
-    // --- [4] تحديث البيانات النهائية في MySQL ---
-    $sql = "UPDATE users SET username = :uname, bio = :bio, profile_pic = :pic $password_sql WHERE user_id = :uid";
+    // --- [4] تحديث البيانات النهائية في PostgreSQL ---
+    $sql = "UPDATE users SET name = :name, bio = :bio, profile_pic = :pic $password_sql WHERE id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
 

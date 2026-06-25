@@ -39,6 +39,11 @@ if ($is_logged_in) {
         $profile_img = 'images/default-avatar.png';
     }
 }
+
+// توليد CSRF Token لكل طلب، أو التحقق مما إذا كان موجودًا في الجلسة
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -275,6 +280,7 @@ if ($is_logged_in) {
                 <!-- وضع التعديل (مخفي افتراضياً) -->
                 <div id="profile-edit-mode" style="display: none;">
                     <form action="update_profile.php" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                         <div style="margin-bottom: 15px;">
                             <label style="display:block; font-size:0.75rem; color:var(--cyber-cyan); margin-bottom:5px;">[ اسم المستخدم ]</label>
                             <input type="text" name="username" value="<?php echo htmlspecialchars($username); ?>" style="width:100%; background:#161b22; border:1px solid #30363d; color:#fff; padding:10px; border-radius:8px;">

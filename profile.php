@@ -194,7 +194,7 @@ if (empty($_SESSION['csrf_token'])) {
                 </button>
                 
                 <form id="edit-form" action="update_profile.php" method="POST" enctype="multipart/form-data" style="display: none; text-align: right; margin-top: 20px;">
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; font-size: 0.8rem; color: var(--cyber-cyan); margin-bottom: 5px;">[ UPDATE_USERNAME ]</label>
                         <input type="text" name="username" value="<?php echo htmlspecialchars($username); ?>" style="width: 100%; background: #000; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 5px;" placeholder="اسم المستخدم الجديد">
