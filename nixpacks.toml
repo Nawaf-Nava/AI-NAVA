@@ -1,0 +1,10 @@
+# nixpacks.toml
+
+[phases.setup]
+# قائمة الحزم التي يجب تثبيتها على السيرفر
+# aptPkgs هي الطريقة الصحيحة لمنصات مثل Railway التي تستخدم Nixpacks
+aptPkgs = ["php-pgsql", "postgresql-client"]
+
+[start]
+# أمر بدء تشغيل سيرفر أباتشي وتوجيهه للمجلد العام
+command = "heroku-php-apache2 public/"

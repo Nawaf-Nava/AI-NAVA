@@ -29,9 +29,11 @@ try {
     // --- [2] قراءة إعدادات الاتصال بنفس منطق config/database.php ---
     $db_url = getenv('DATABASE_URL');
     if ($db_url === false) {
-        throw new PDOException("CRITICAL: Environment variable 'DATABASE_URL' is not set.");
+        echo "DATABASE_URL: Not found. Using hardcoded fallback URL.\n";
+        $db_url = "postgresql://postgres:JisCbmnkfhOBosZSMkpaEatkGxkRsYXO@thomas.proxy.rlwy.net:43959/railway";
+    } else {
+        echo "DATABASE_URL: Found. (Value is hidden for security)\n";
     }
-    echo "DATABASE_URL: Found. (Value is hidden for security)\n";
     
     $parsed_url = parse_url($db_url);
     $host   = $parsed_url['host'];

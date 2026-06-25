@@ -25,10 +25,12 @@ log_debug("=== بدء اختبار الاتصال ===");
 $pdo = null; // تهيئة المتغير لضمان وجوده
 
 try {
-    // 3. [محترف] الاعتماد الكلي على متغيرات البيئة التي يوفرها السيرفر (مثل Railway)
+    // 3. [محسن] محاولة قراءة الرابط من متغيرات البيئة أولاً (الأفضل للإنتاج)
     $db_url = getenv('DATABASE_URL');
     if ($db_url === false) {
-        throw new Exception("CRITICAL: متغير البيئة 'DATABASE_URL' غير موجود. لا يمكن الاتصال بقاعدة البيانات.");
+        log_debug("متغير البيئة DATABASE_URL غير موجود، سيتم استخدام الرابط المباشر كخيار احتياطي.");
+        // استخدام الرابط المباشر الذي قدمته كخيار احتياطي
+        $db_url = "postgresql://postgres:JisCbmnkfhOBosZSMkpaEatkGxkRsYXO@thomas.proxy.rlwy.net:43959/railway";
     }
 
 log_debug("استخراج إعدادات الاتصال من متغير البيئة DATABASE_URL...");
