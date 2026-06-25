@@ -72,6 +72,9 @@
                                 name VARCHAR(100) NOT NULL,
                                 email VARCHAR(150) UNIQUE NOT NULL,
                                 password VARCHAR(255) NOT NULL,
+                                bio TEXT,
+                                profile_pic VARCHAR(255) DEFAULT 'default-avatar.png',
+                                access_level VARCHAR(50) DEFAULT 'USER' NOT NULL,
                                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                               );";
                 $pdo->exec($sql_users);

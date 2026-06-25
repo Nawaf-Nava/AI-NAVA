@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     try {
         // [1] البحث عن المستخدم عبر البريد الإلكتروني في Schema الجديد
-        $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE LOWER(email) = LOWER(?)");
+        $stmt = $pdo->prepare("SELECT id, name, email, password, bio, profile_pic, access_level FROM users WHERE LOWER(email) = LOWER(?)");
         $stmt->execute([$email]);
         $target_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_db_id']  = $target_user['id']; // معرف إضافي للاستخدام في api.php
             $_SESSION['username']    = $target_user['name'];
             $_SESSION['email']       = $target_user['email'];
-            // تعيين قيم افتراضية للمفاتيح القديمة لضمان عدم حدوث أخطاء
-            $_SESSION['bio']         = '';
-            $_SESSION['profile_pic'] = 'default-avatar.png';
+            $_SESSION['bio']         = $target_user['bio'];
+            $_SESSION['profile_pic'] = $target_user['profile_pic'];
+            $_SESSION['access_level']= $target_user['access_level'];
 
             header("Location: index.php");
             exit();

@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_db_id']  = $user_id;
                 $_SESSION['username']    = $username;
                 $_SESSION['email']       = $email;
-                $_SESSION['bio']         = '';
-                $_SESSION['profile_pic'] = 'default-avatar.png';
-
+                $_SESSION['bio']         = ''; // Bio is empty on registration
+                $_SESSION['profile_pic'] = 'default-avatar.png'; // Default avatar
+                $_SESSION['access_level']= 'USER'; // Default access level
                 $success_msg = "تمت مزامنة العقدة وإنشاء ملف الهوية بنجاح! جاري الانتقال للوحة التحكم...";
                 
                 // التأكد من إرسال الـ Headers قبل أي مخرجات
