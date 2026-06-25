@@ -1,10 +1,15 @@
 # nixpacks.toml
 
+[providers]
+# إجبار Nixpacks على استخدام حزمة PHP التقليدية بدلاً من FrankenPHP
+php = "heroku"
+
 [phases.setup]
 # قائمة الحزم التي يجب تثبيتها على السيرفر
 # aptPkgs هي الطريقة الصحيحة لمنصات مثل Railway التي تستخدم Nixpacks
-aptPkgs = ["php-pgsql", "postgresql-client"]
+aptPkgs = ["php-pgsql", "postgresql-client", "libapache2-mod-php"]
 
 [start]
 # أمر بدء تشغيل سيرفر أباتشي وتوجيهه للمجلد العام
-command = "heroku-php-apache2 public/"
+# تم التعديل ليكون متوافقاً مع Heroku Buildpack
+command = "heroku-php-apache2"
