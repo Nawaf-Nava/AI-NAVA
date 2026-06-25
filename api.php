@@ -353,7 +353,7 @@ try {
 
     // --- [2] إدارة الذاكرة التقنية عبر PostgreSQL ---
     // تقليل سياق الذاكرة لزيادة التركيز وتجنب تضارب المعلومات القديمة
-    $stmt = $pdo->prepare("SELECT role, content FROM messages WHERE session_uuid = ? ORDER BY created_at ASC LIMIT 10");
+    $stmt = $pdo ? $pdo->prepare("SELECT role, content FROM messages WHERE session_uuid = ? ORDER BY created_at ASC LIMIT 10") : false;
     $stmt->execute([$session_id]);
     $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -492,7 +492,7 @@ try {
 
     if ($botReply) {
         // [REFACTORED]: منطق الحفظ الجديد المتوافق مع Schema الجديد
-        if (isset($_SESSION['user_id'])) {
+        if (isset($_SESSION['user_id']) && $pdo !== null) { // [مهم] التحقق من وجود اتصال ناجح قبل الحفظ
             try {
                 $pdo->beginTransaction();
                 $user_db_id = $_SESSION['user_db_id']; // استخدام المعرف الرقمي
@@ -520,7 +520,7 @@ try {
             } catch (Exception $dbEx) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
                 error_log("DB_SYNC_ERROR: " . $dbEx->getMessage());
-                $chat_id = null; // إعادة تعيين المعرف في حالة الفشل
+                $chat_id = $data['session_id'] ?? 'GUEST_SESSION'; // إعادة المعرف القديم في حالة الفشل
             }
         }
 
