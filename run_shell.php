@@ -6,7 +6,9 @@
 session_start();
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
+// [أمان] السماح بالتشغيل فقط للمستخدمين المسجلين الذين يملكون صلاحية ADMIN
+if (!isset($_SESSION['user_id']) || (isset($_SESSION['access_level']) && $_SESSION['access_level'] !== 'ADMIN')) {
+    http_response_code(403); // Forbidden
     exit(json_encode(['error' => 'ACCESS_DENIED']));
 }
 

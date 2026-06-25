@@ -18,8 +18,8 @@ if ($is_logged_in) {
     $user_id = $_SESSION['user_id'];
     
     // جلب البيانات المحدثة من قاعدة البيانات
-    $stmt = $pdo->prepare("SELECT user_id, username, bio, profile_pic, access_level, created_at FROM users WHERE user_id = :user_id");
-    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_STR);
+    $stmt = $pdo->prepare("SELECT id, name, bio, profile_pic, access_level, created_at FROM users WHERE id = :id");
+    $stmt->bindParam(':id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
     $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -34,7 +34,7 @@ if ($is_logged_in) {
     exit;
 }
 
-$username = $user_data['username'];
+$username = $user_data['name'];
 $bio = $user_data['bio'];
 $profile_pic = $user_data['profile_pic'];
 
@@ -184,7 +184,7 @@ if (empty($_SESSION['csrf_token'])) {
             </div>
             <h1 style="color: var(--cyber-cyan); margin: 0; font-size: 2rem; /* تم تقليل حجم الخط */"><?php echo htmlspecialchars($username); ?></h1>
             <p style="color: #888; font-family: 'Fira Code', monospace;">[ NODE_ID: <?php echo htmlspecialchars($user_id); ?> ]</p>
-            <div style="margin-top: 15px; font-style: italic; color: #eee;">"<?php echo htmlspecialchars($bio); ?>"</div>
+            <div style="margin-top: 15px; font-style: italic; color: #eee;">"<?php echo htmlspecialchars($bio ?? ''); ?>"</div>
             
             <!-- قسم تعديل الملف الشخصي -->
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
@@ -263,14 +263,14 @@ if (empty($_SESSION['csrf_token'])) {
             </h3>
             <?php
             // جلب جلسات المحادثة من قاعدة البيانات
-            $stmt = $pdo->prepare("SELECT session_uuid, title, created_at FROM sessions WHERE user_id = :user_id ORDER BY created_at DESC");
-            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_STR);
+            $stmt = $pdo->prepare("SELECT id, title FROM chats WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 25");
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
             $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (!empty($sessions)) {
                 foreach ($sessions as $session) {
-                    echo "<div class='session-item'>
+                    echo "<div class='session-item' data-session-id='" . htmlspecialchars($session['id']) . "'>
                                     <span><i class='fa-regular fa-comment'></i> Session: " . htmlspecialchars($session['title'] ?? 'Untitled Session') . "</span>
                                     <small style=\"color:var(--cyber-cyan); font-family:'Fira Code', monospace;\">ACTIVE</small>
                                   </div>";

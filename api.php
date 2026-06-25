@@ -353,9 +353,12 @@ try {
 
     // --- [2] إدارة الذاكرة التقنية عبر PostgreSQL ---
     // تقليل سياق الذاكرة لزيادة التركيز وتجنب تضارب المعلومات القديمة
-    $stmt = $pdo ? $pdo->prepare("SELECT role, content FROM messages WHERE session_uuid = ? ORDER BY created_at ASC LIMIT 10") : false;
-    $stmt->execute([$session_id]);
-    $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $history = [];
+    if ($pdo && is_numeric($session_id)) { // التحقق من أن المعرف رقمي قبل الاستعلام
+        $stmt = $pdo->prepare("SELECT sender_type as role, content FROM messages WHERE chat_id = ? ORDER BY created_at ASC LIMIT 10");
+        $stmt->execute([$session_id]);
+        $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     
     $contents = [];
     foreach ($history as $msg) {
@@ -498,7 +501,7 @@ try {
                 $user_db_id = $_SESSION['user_db_id']; // استخدام المعرف الرقمي
 
                 // 1. التأكد من وجود المحادثة، وإن لم تكن موجودة، يتم إنشاؤها
-                $chat_id = $data['session_id'] ?? null;
+                $chat_id = isset($data['session_id']) && is_numeric($data['session_id']) ? $data['session_id'] : null;
                 if (!$chat_id || !is_numeric($chat_id)) {
                     // إنشاء محادثة جديدة إذا كانت هذه هي الرسالة الأولى
                     $initial_title = mb_substr($userMessage, 0, 50) ?: 'محادثة جديدة';
@@ -509,11 +512,11 @@ try {
                 }
 
                 // 2. إدخال رسالة المستخدم
-                $insUser = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'user', ?)");
+                $insUser = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'user', ?)"); // sender_type
                 $insUser->execute([$chat_id, $userMessage]);
 
                 // 3. إدخال رسالة البوت
-                $insBot = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'ai', ?)");
+                $insBot = $pdo->prepare("INSERT INTO messages (chat_id, sender_type, content) VALUES (?, 'ai', ?)"); // sender_type
                 $insBot->execute([$chat_id, $botReply]);
                 
                 $pdo->commit();

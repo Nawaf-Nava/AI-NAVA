@@ -1452,8 +1452,8 @@ async function loadHistoryToSidebar() {
         sessions.forEach(session => {
             const card = document.createElement('div');
             card.className = 'history-card';
-            const sID = session.session_uuid || session.session_id; // دعم كلا الاسمين
-            card.innerHTML = `
+            const sID = session.id; // الاعتماد على المعرف الرقمي الجديد
+            card.innerHTML = ` 
                 <div class="card-title-area" data-session-id="${sID}">
                     <i class="fa-regular fa-comment-dots card-icon"></i>
                     <span class="card-text">${session.title || 'NULL_SESSION'}</span>

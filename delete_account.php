@@ -15,16 +15,16 @@ $upload_dir = __DIR__ . '/images/uploads/';
 require_once 'config/database.php';
 
 // جلب اسم الصورة قبل حذف السجل من قاعدة البيانات
-$stmt = $pdo->prepare("SELECT profile_pic FROM users WHERE user_id = ?");
+$stmt = $pdo->prepare("SELECT profile_pic FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $profile_pic_filename = $stmt->fetchColumn();
 
 try {
     $pdo->beginTransaction(); // بدء معاملة قاعدة البيانات
 
-    // 0. حذف السجل من قاعدة البيانات أولاً
+    // 1. حذف السجل من قاعدة البيانات أولاً
     // حذف المستخدم من جدول users سيؤدي تلقائياً إلى حذف جلساته ورسائله بفضل ON DELETE CASCADE
-    $stmt = $pdo->prepare("DELETE FROM users WHERE user_id = ?");
+    $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     // حذف الصورة الشخصية إذا لم تكن الصورة الافتراضية وموجودة في المسار الجديد
     if ($profile_pic_filename && $profile_pic_filename !== 'default-avatar.png' && file_exists($upload_dir . $profile_pic_filename)) {
