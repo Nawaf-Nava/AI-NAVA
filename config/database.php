@@ -1,8 +1,9 @@
 <?php
 /**
- * PROJECT: NAVA AI - PostgreSQL Connection (FULL DIAGNOSTIC)
- * DATABASE: Railway PostgreSQL
- * VERSION: DIRECT URL CONNECTION (FIXED)
+ * PROJECT: NAVA AI - Local Database Connection
+ * DATABASE: MySQL (Local Apache/MariaDB)
+ * USER: nava_user (or as configured)
+ * ENGINEER: NAWAF_ROOT
  */
 
 // 1. إنشاء مجلد logs إذا لم يكن موجوداً
@@ -17,7 +18,7 @@ $debug_log = $logs_dir . '/database_connection_' . date('Y-m-d') . '.log';
 function log_debug($message) {
     global $debug_log;
     $timestamp = date('Y-m-d H:i:s');
-    file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND);
+    file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND | LOCK_EX);
 }
 
 log_debug("=== بدء اختبار الاتصال ===");
@@ -25,78 +26,50 @@ log_debug("=== بدء اختبار الاتصال ===");
 $pdo = null; // تهيئة المتغير لضمان وجوده
 
 try {
-    // 3. [محسن] محاولة قراءة الرابط من متغيرات البيئة أولاً (الأفضل للإنتاج)
-    $db_url = getenv('DATABASE_URL');
-    if ($db_url === false) {
-        log_debug("متغير البيئة DATABASE_URL غير موجود، سيتم استخدام الرابط المباشر كخيار احتياطي.");
-        // استخدام الرابط المباشر الذي قدمته كخيار احتياطي
-        $db_url = "postgresql://postgres:JisCbmnkfhOBosZSMkpaEatkGxkRsYXO@thomas.proxy.rlwy.net:43959/railway";
-    }
+    // 3. [محلي] إعدادات الاتصال بقاعدة بيانات MySQL المحلية
+    $host    = '127.0.0.1'; // أو 'localhost' - عنوان السيرفر المحلي
+    $port    = '3306';      // المنفذ الافتراضي لـ MySQL/MariaDB
+    $dbname  = 'nava_db';   // اسم قاعدة البيانات التي أنشأتها
+    $user    = 'nava_user'; // اسم المستخدم الذي أنشأته لقاعدة البيانات
+    $pass    = '123456';    // كلمة المرور للمستخدم الذي أنشأته
+    $charset = 'utf8mb4';
 
-log_debug("استخراج إعدادات الاتصال من متغير البيئة DATABASE_URL...");
-$parsed_url = parse_url($db_url);
+    // بناء DSN للاتصال بـ MySQL المحلي
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
 
-$host   = $parsed_url['host'];
-$port   = $parsed_url['port'];
-$dbname = ltrim($parsed_url['path'], '/'); 
-$user   = $parsed_url['user'];
-$pass   = $parsed_url['pass'];
+    // 4. تسجيل المتغيرات المستخرجة للتأكد
+    log_debug("Host: $host");
+    log_debug("Database: $dbname");
+    log_debug("User: $user");
+    log_debug("Port: $port");
+    log_debug("DSN: " . $dsn);
 
-// 4. تسجيل المتغيرات المستخرجة للتأكد
-log_debug("PGHOST: $host");
-log_debug("PGDATABASE: $dbname");
-log_debug("POSTGRES_USER: $user");
-log_debug("PGPORT: $port");
+    // 5. خيارات الاتصال
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
 
-// 5. التحقق من وجود البيانات المستخرجة
-$missing = [];
-if (!$host) $missing[] = 'HOST';
-if (!$dbname) $missing[] = 'DATABASE';
-if (!$user) $missing[] = 'USER';
-if (!$pass) $missing[] = 'PASSWORD';
-
-if (!empty($missing)) {
-    $error_msg = "❌ فشل استخراج بيانات الاتصال من الرابط المباشر: " . implode(', ', $missing) . "\n\n";
-    log_debug("ERROR: بيانات مفقودة في الرابط");
-    die("<pre>" . htmlspecialchars($error_msg) . "</pre>");
-}
-
-// 6. بناء DSN للاتصال المباشر عبر المنفذ الخارجي لـ Railway
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
-log_debug("DSN المبني: pgsql:host=$host;port=$port;dbname=$dbname");
-
-// 7. خيارات الاتصال
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
-
-    log_debug("جاري محاولة الاتصال...");
-    
     $pdo = new PDO($dsn, $user, $pass, $options);
     
     // اختبار الاتصال بـ query بسيطة
-    $test = $pdo->query("SELECT NOW()");
-    $result = $test->fetch();
+    $pdo->query("SELECT 1"); // أبسط وأسرع اختبار للاتصال
     
     log_debug("✓ الاتصال نجح!");
-    log_debug("✓ الوقت من قاعدة البيانات: " . $result['now']);
+    // لم نعد بحاجة لجلب الوقت، فقط نتأكد من أن الاستعلام يعمل
     log_debug("=== انتهى الاختبار بنجاح ===\n");
 
-} catch (Exception $e) { // تم التغيير إلى Exception لالتقاط كافة الأخطاء بما فيها متغير البيئة المفقود
+} catch (Exception $e) {
     log_debug("❌ فشل الاتصال!");
     log_debug("Error Code: " . $e->getCode());
     log_debug("Error Message: " . $e->getMessage());
     log_debug("=== انتهى الاختبار بفشل ===\n");
 
-    // [مهم] إذا كان الملف الذي يستدعي هذا الكود هو api.php، لا تقم بإيقاف التنفيذ الكامل
-    // بدلاً من ذلك، قم بتعريف $pdo كـ null للسماح للنموذج بالرد دون حفظ.
-    if (basename($_SERVER['SCRIPT_NAME']) === 'api.php') {
+    if (isset($_SERVER['SCRIPT_NAME']) && basename($_SERVER['SCRIPT_NAME']) === 'api.php') {
         $pdo = null; // تم تعيينه مسبقاً، هذا للتأكيد فقط
     } else {
-        // للملفات الأخرى (مثل test_db.php)، أظهر رسالة الخطأ الكاملة
-        die("<pre>🔴 فشل الاتصال بقاعدة البيانات: " . htmlspecialchars($e->getMessage()) . "</pre>");
+        die("<pre style='background-color: #282c34; color: #ff6c6b; padding: 20px; border-radius: 5px; font-family: monospace;'>🔴 Database Connection Failed: " . htmlspecialchars($e->getMessage()) . "</pre>");
     }
 }
 

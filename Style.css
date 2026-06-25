@@ -220,10 +220,6 @@ html, body {
 }
 /* تم حذف التكرار وتوحيد الـ Root في الأعلى */
 * {
-    margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none !important;
-}
-
-.conversation-zone, .msg-content, code, pre {
     user-select: text;
 }
 
@@ -309,27 +305,6 @@ html, body {
 
 .delete-session-btn:hover { color: var(--neon-red); transform: scale(1.1); }
 /* إغلاق قوس الـ space-engine الذي كان مفقوداً */
-
-.space-engine::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(180deg, transparent 0%, rgba(0, 242, 255, 0.05) 50%, transparent 100%);
-    animation: scannerMove 15s infinite linear;
-    pointer-events: none;
-}
-
-.space-engine::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url('images/stardust.png');
-    opacity: 0.03;
-    pointer-events: none;
-}
 
 .app-shell {
     display: flex;
@@ -451,9 +426,6 @@ html, body {
     text-shadow: 0 0 15px var(--cyan-glow);
 }
 
-.nav-left { display: flex; align-items: center; gap: 20px; } /* تم توحيدها */
-.nav-right { display: flex; align-items: center; gap: 25px; } /* تم توحيدها */
-
 /* [تلوين أيقونات الشريط العلوي باحترافية] */
 /* الأيقونات الملونة في الشريط العلوي - تم زيادة التوهج */
 #history-toggle-btn i { color: var(--cyber-cyan); filter: drop-shadow(0 0 10px var(--cyan-transparent)); }
@@ -485,26 +457,6 @@ html, body {
 .node-id:hover {
     background: var(--cyan-heavy);
     color: var(--bg-dark);
-}
-
-.profile-trigger {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--cyan-transparent);
-    border: 1.5px solid var(--cyan-glow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
-    overflow: hidden;
-}
-
-.profile-trigger img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 .profile-trigger:hover {

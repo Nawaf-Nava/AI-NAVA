@@ -505,9 +505,9 @@ try {
                 if (!$chat_id || !is_numeric($chat_id)) {
                     // إنشاء محادثة جديدة إذا كانت هذه هي الرسالة الأولى
                     $initial_title = mb_substr($userMessage, 0, 50) ?: 'محادثة جديدة';
-                    $stmtInsChat = $pdo->prepare("INSERT INTO chats (user_id, title) VALUES (?, ?) RETURNING id");
+                    $stmtInsChat = $pdo->prepare("INSERT INTO chats (user_id, title) VALUES (?, ?)");
                     $stmtInsChat->execute([$user_db_id, $initial_title]);
-                    $chat_id = $stmtInsChat->fetchColumn();
+                    $chat_id = $pdo->lastInsertId(); // التوافق مع MySQL
                     $_SESSION['active_chat_id'] = $chat_id; // تحديث الجلسة بالمعرف الجديد
                 }
 

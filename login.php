@@ -28,17 +28,17 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // تم التغيير لاستخدام البريد الإلكتروني لتسجيل الدخول
-    $email = trim($_POST['email']);
+    $username_input = trim($_POST['username']);
     $password = $_POST['password'];
     
     try {
         // [1] البحث عن المستخدم عبر البريد الإلكتروني في Schema الجديد
-        $stmt = $pdo->prepare("SELECT id, name, email, password, bio, profile_pic, access_level FROM users WHERE LOWER(email) = LOWER(?)");
-        $stmt->execute([$email]);
+        $stmt = $pdo->prepare("SELECT id, name, password, bio, profile_pic, access_level FROM users WHERE LOWER(name) = LOWER(?)");
+        $stmt->execute([$username_input]);
         $target_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$target_user) {
-            $error = "خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+            $error = "خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.";
         } 
         // [2] التحقق من كلمة المرور (العمود الجديد اسمه 'password')
         elseif (!password_verify($password, $target_user['password'])) {
@@ -51,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // [3] تعيين بيانات الجلسة من Schema الجديد
             $_SESSION['user_id']     = $target_user['id']; // المعرف الرقمي الجديد
             $_SESSION['user_db_id']  = $target_user['id']; // معرف إضافي للاستخدام في api.php
-            $_SESSION['username']    = $target_user['name'];
-            $_SESSION['email']       = $target_user['email'];
+            $_SESSION['username']    = $target_user['name']; // اسم المستخدم
             $_SESSION['bio']         = $target_user['bio'];
             $_SESSION['profile_pic'] = $target_user['profile_pic'];
             $_SESSION['access_level']= $target_user['access_level'];
@@ -130,8 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <form method="POST">
             <!-- تم التغيير إلى البريد الإلكتروني -->
-            <input type="email" name="email" placeholder="Email Address" required autocomplete="off">
-            <input type="password" name="password" placeholder="Password (ACCESS_KEY)" required>
+            <input type="text" name="username" placeholder="اسم المستخدم" required autocomplete="off">
+            <input type="password" name="password" placeholder="كلمة المرور" required>
             <button type="submit">INITIALIZE_SESSION</button>
         </form>
 
