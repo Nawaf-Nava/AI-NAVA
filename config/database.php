@@ -69,7 +69,12 @@ try {
     if (isset($_SERVER['SCRIPT_NAME']) && basename($_SERVER['SCRIPT_NAME']) === 'api.php') {
         $pdo = null; // تم تعيينه مسبقاً، هذا للتأكيد فقط
     } else {
-        die("<pre style='background-color: #282c34; color: #ff6c6b; padding: 20px; border-radius: 5px; font-family: monospace;'>🔴 Database Connection Failed: " . htmlspecialchars($e->getMessage()) . "</pre>");
+        // عرض رسالة خطأ مفصلة للمساعدة في حل المشكلة
+        $errorMessage = htmlspecialchars($e->getMessage());
+        $suggestion = (strpos($host, 'infinityfree.com') !== false) 
+            ? "<br><br>💡 <strong>ملاحظة لاستضافة InfinityFree:</strong> تأكد من أنك قمت بإضافة IP الخاص بسيرفرك إلى قائمة 'Remote MySQL' في لوحة التحكم (cPanel). إذا كنت تختبر من جهازك المحلي، أضف عنوان IP العام الخاص بك." 
+            : "";
+        die("<pre style='background-color: #282c34; color: #ff6c6b; padding: 20px; border-radius: 5px; font-family: monospace; line-height: 1.6;'>🔴 Database Connection Failed: " . $errorMessage . $suggestion . "</pre>");
     }
 }
 
