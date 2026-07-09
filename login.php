@@ -24,6 +24,49 @@ session_start();
 
 require_once 'config/database.php';
 
+// --- [محرك الإعداد التلقائي لقاعدة البيانات] ---
+// هذا الجزء يقوم بإنشاء الجداول المطلوبة تلقائياً عند زيارة الصفحة لأول مرة.
+try {
+    if ($pdo) { // التأكد من أن الاتصال بقاعدة البيانات ناجح
+        $sql_statements = [
+            "users" => "CREATE TABLE IF NOT EXISTS `users` (
+                          `id` INT AUTO_INCREMENT PRIMARY KEY,
+                          `name` VARCHAR(255) NOT NULL UNIQUE,
+                          `password` VARCHAR(255) NOT NULL,
+                          `bio` TEXT,
+                          `profile_pic` VARCHAR(255) DEFAULT 'default-avatar.png',
+                          `access_level` VARCHAR(50) DEFAULT 'USER',
+                          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "chats" => "CREATE TABLE IF NOT EXISTS `chats` (
+                          `id` INT AUTO_INCREMENT PRIMARY KEY,
+                          `user_id` INT NOT NULL,
+                          `title` VARCHAR(255) NOT NULL,
+                          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "messages" => "CREATE TABLE IF NOT EXISTS `messages` (
+                             `id` INT AUTO_INCREMENT PRIMARY KEY,
+                             `chat_id` INT NOT NULL,
+                             `sender_type` VARCHAR(50) NOT NULL,
+                             `content` TEXT NOT NULL,
+                             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                             FOREIGN KEY (`chat_id`) REFERENCES `chats`(`id`) ON DELETE CASCADE
+                           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+        ];
+
+        foreach ($sql_statements as $sql) {
+            $pdo->exec($sql);
+        }
+    }
+} catch (PDOException $e) {
+    // في حال فشل إنشاء الجداول، يتم إيقاف البرنامج وعرض الخطأ
+    die("خطأ حرج في إعداد قاعدة البيانات: " . $e->getMessage());
+}
+// --- [نهاية محرك الإعداد التلقائي] ---
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
