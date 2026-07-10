@@ -360,10 +360,12 @@ try {
     // --- [2] إدارة الذاكرة التقنية عبر PostgreSQL ---
     // تقليل سياق الذاكرة لزيادة التركيز وتجنب تضارب المعلومات القديمة
     $history = [];
-    if ($pdo && is_numeric($session_id)) { // التحقق من أن المعرف رقمي قبل الاستعلام
-        $stmt = $pdo->prepare("SELECT sender_type as role, content FROM messages WHERE chat_id = ? ORDER BY created_at ASC LIMIT 10");
+    if ($pdo && is_numeric($session_id)) { // التحقق من أن المعرف رقمي قبل الاستعلام        
+        // [تحسين] جلب آخر 100 رسالة لزيادة عمق الذاكرة السياقية للنموذج
+        $stmt = $pdo->prepare("SELECT sender_type as role, content FROM messages WHERE chat_id = ? ORDER BY created_at DESC LIMIT 100");
         $stmt->execute([$session_id]);
-        $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // عكس المصفوفة للحفاظ على الترتيب الزمني الصحيح (من الأقدم للأحدث) الذي يتوقعه النموذج
+        $history = array_reverse($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
     
     $contents = [];
@@ -510,7 +512,8 @@ try {
                 $chat_id = isset($data['session_id']) && is_numeric($data['session_id']) ? $data['session_id'] : null;
                 if (!$chat_id || !is_numeric($chat_id)) {
                     // إنشاء محادثة جديدة إذا كانت هذه هي الرسالة الأولى
-                    $initial_title = mb_substr($userMessage, 0, 50) ?: 'محادثة جديدة';
+                    // [إصلاح] استخدام عنوان خاص للمحادثات غير المحفوظة لإخفائها من الأرشيف
+                    $initial_title = 'UNSAVED_SESSION_' . time();
                     $stmtInsChat = $pdo->prepare("INSERT INTO chats (user_id, title) VALUES (?, ?)");
                     $stmtInsChat->execute([$user_db_id, $initial_title]);
                     $chat_id = $pdo->lastInsertId(); // التوافق مع MySQL

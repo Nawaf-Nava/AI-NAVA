@@ -29,7 +29,7 @@ try {
      * 3. الاستعلام المجهز
      * تم التحديث ليتوافق مع Schema الجديد
      */
-    $query = "SELECT id, title FROM chats WHERE user_id = ? ORDER BY created_at DESC LIMIT 50";
+    $query = "SELECT id, title FROM chats WHERE user_id = ? AND title NOT LIKE 'UNSAVED_SESSION_%' ORDER BY created_at DESC LIMIT 50";
               
     $stmt = $pdo->prepare($query);
     $stmt->execute([$user_id]);

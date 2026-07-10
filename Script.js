@@ -614,7 +614,7 @@ async function loadHistoryFromServer() {
         return;
     }
 
-    // [إصلاح] 1. تجهيز الواجهة للتحميل (إخفاء الترحيب، إظهار المحادثة مع مؤشر التحميل)
+    // [إصلاح شامل] 1. تجهيز الواجهة للتحميل (إخفاء الترحيب، إظهار المحادثة مع مؤشر التحميل)
     DOM.refresh();
     if (DOM.welcomeHero) DOM.welcomeHero.style.display = 'none';
     if (DOM.chat) {
@@ -638,7 +638,8 @@ async function loadHistoryFromServer() {
             chatState.history = data.history;
             if (chatState.history.length > 0) {
                 chatState.history.forEach(msg => {
-                    const role = (msg.role === 'model' || msg.role === 'assistant') ? 'bot' : 'user';
+                    // [إصلاح] تصحيح تحديد دور المرسل لضمان محاذاة رسائل البوت بشكل صحيح
+                    const role = (msg.role === 'model' || msg.role === 'assistant' || msg.role === 'ai') ? 'bot' : 'user';
                     renderMessage(role, msg.content, false);
                 });
                 setTimeout(() => Utils.scrollBottom(), 100); // التمرير للأسفل بعد العرض
