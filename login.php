@@ -24,48 +24,54 @@ session_start();
 
 require_once 'config/database.php';
 
-// --- [محرك الإعداد التلقائي لقاعدة البيانات] ---
-// هذا الجزء يقوم بإنشاء الجداول المطلوبة تلقائياً عند زيارة الصفحة لأول مرة.
-try {
-    if ($pdo) { // التأكد من أن الاتصال بقاعدة البيانات ناجح
-        $sql_statements = [
-            "users" => "CREATE TABLE IF NOT EXISTS `users` (
-                          `id` INT AUTO_INCREMENT PRIMARY KEY,
-                          `name` VARCHAR(255) NOT NULL UNIQUE,
-                          `password` VARCHAR(255) NOT NULL,
-                          `bio` TEXT,
-                          `profile_pic` VARCHAR(255) DEFAULT 'default-avatar.png',
-                          `access_level` VARCHAR(50) DEFAULT 'USER',
-                          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+// --- [فحص الاتصال ومحرك الإعداد التلقائي] ---
 
-            "chats" => "CREATE TABLE IF NOT EXISTS `chats` (
-                          `id` INT AUTO_INCREMENT PRIMARY KEY,
-                          `user_id` INT NOT NULL,
-                          `title` VARCHAR(255) NOT NULL,
-                          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+if ($pdo === null) {
+    // إذا فشل الاتصال في config/database.php، نعرض رسالة خطأ مفصلة هنا.
+    // هذا هو المكان الذي يراه المستخدم، لذا يجب أن تكون الرسالة واضحة.
 
-            "messages" => "CREATE TABLE IF NOT EXISTS `messages` (
-                             `id` INT AUTO_INCREMENT PRIMARY KEY,
-                             `chat_id` INT NOT NULL,
-                             `sender_type` VARCHAR(50) NOT NULL,
-                             `content` TEXT NOT NULL,
-                             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                             FOREIGN KEY (`chat_id`) REFERENCES `chats`(`id`) ON DELETE CASCADE
-                           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
-        ];
-
-        foreach ($sql_statements as $sql) {
-            $pdo->exec($sql);
-        }
+    // [جديد] عرض الخطأ التقني الفعلي للمساعدة في التشخيص الدقيق
+    $technical_error_html = '';
+    if (!empty($db_connection_error)) {
+        $technical_error_html = "<div style='background: #3e2121; border: 1px solid #ff6c6b; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left; direction: ltr; font-family: monospace;'><strong>Technical Error Details:</strong><br>" . htmlspecialchars($db_connection_error) . "</div>";
     }
-} catch (PDOException $e) {
-    // في حال فشل إنشاء الجداول، يتم إيقاف البرنامج وعرض الخطأ
-    die("خطأ حرج في إعداد قاعدة البيانات: " . $e->getMessage());
+
+    die("
+    <body style='background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; padding: 20px; direction: rtl;'>
+    <div style='max-width: 800px; margin: 40px auto; border: 1px solid #ff6c6b; border-radius: 8px; padding: 25px; background-color: #282c34;'>
+        <h1 style='color: #ff6c6b; text-align: center;'>🔴 فشل الاتصال بقاعدة البيانات</h1>
+        {$technical_error_html}
+        <p>لم يتمكن النظام من الاتصال بقاعدة البيانات. هذا يعني أن الجداول المطلوبة لم يتم إنشاؤها، والموقع لن يعمل.</p>
+        <p>بما أنك تستخدم استضافة InfinityFree، فالسبب غالباً واحد من التالي:</p>
+        
+        <h3 style='color: #79c0ff;'>1. خطأ في معلومات الاتصال</h3>
+        <p>تأكد 100% أن هذه المعلومات صحيحة ومطابقة لما هو موجود في لوحة تحكم InfinityFree:</p>
+        <pre style='background: #161b22; padding: 15px; border-radius: 5px; border: 1px solid #30363d; color: #c9d1d9; font-family: monospace; text-align: left; direction: ltr;'>
+Host:     sql210.infinityfree.com
+Database: if0_42300177_nava_db
+Username: if0_42300177
+Password: (كلمة المرور التي أعطيتها)
+        </pre>
+        <p><strong>ملاحظة:</strong> اسم المستخدم واسم قاعدة البيانات ليسا نفس اسم حسابك في InfinityFree.</p>
+    
+        <h3 style='color: #79c0ff;'>2. صلاحيات الوصول عن بعد (السبب الأكثر شيوعاً)</h3>
+        <p>استضافة InfinityFree تتطلب منك السماح لخادم الويب بالوصول إلى خادم قاعدة البيانات. هذا يتم عبر قسم <strong>\"Remote MySQL\"</strong>.</p>
+        <ul>
+            <li>اذهب إلى لوحة التحكم (cPanel) في InfinityFree.</li>
+            <li>ابحث عن أيقونة باسم \"Remote MySQL\".</li>
+            <li>في خانة \"Host (% wildcard is allowed)\"، اكتب عنوان IP الخاص بموقعك.</li>
+            <li><strong>كيف تجد IP موقعك؟</strong> في لوحة التحكم، على اليمين، ستجد قسماً باسم \"Account Details\" أو \"General Information\". ابحث عن \"Website IP\" أو \"Server IP\" وانسخه.</li>
+            <li>الصق الـ IP في خانة Remote MySQL واضغط \"Add Host\".</li>
+        </ul>
+        <p>إذا لم تكن متأكداً من الـ IP، يمكنك استخدام الرمز <code>%</code> للسماح بالاتصال من أي مكان، لكن هذا أقل أماناً.</p>
+        
+        <hr style='border-color: #30363d; margin: 20px 0;'>
+        <p style='text-align: center; color: #d29922;'><strong>بعد إصلاح المشكلة في لوحة التحكم، قم بتحديث هذه الصفحة.</strong></p>
+    </div>
+    </body>");
 }
-// --- [نهاية محرك الإعداد التلقائي] ---
+
+// --- [نهاية الفحص ومحرك الإعداد] ---
 
 $error = '';
 

@@ -24,6 +24,7 @@ function log_debug($message) {
 log_debug("=== بدء اختبار الاتصال ===");
 
 $pdo = null; // تهيئة المتغير لضمان وجوده
+$db_connection_error = null; // متغير لتخزين رسالة الخطأ الفعلية
 
 try {
     // 3. [محلي] إعدادات الاتصال بقاعدة بيانات MySQL المحلية
@@ -66,16 +67,10 @@ try {
     log_debug("Error Message: " . $e->getMessage());
     log_debug("=== انتهى الاختبار بفشل ===\n");
 
-    if (isset($_SERVER['SCRIPT_NAME']) && basename($_SERVER['SCRIPT_NAME']) === 'api.php') {
-        $pdo = null; // تم تعيينه مسبقاً، هذا للتأكيد فقط
-    } else {
-        // عرض رسالة خطأ مفصلة للمساعدة في حل المشكلة
-        $errorMessage = htmlspecialchars($e->getMessage());
-        $suggestion = (strpos($host, 'infinityfree.com') !== false) 
-            ? "<br><br>💡 <strong>ملاحظة لاستضافة InfinityFree:</strong> تأكد من أنك قمت بإضافة IP الخاص بسيرفرك إلى قائمة 'Remote MySQL' في لوحة التحكم (cPanel). إذا كنت تختبر من جهازك المحلي، أضف عنوان IP العام الخاص بك." 
-            : "";
-        die("<pre style='background-color: #282c34; color: #ff6c6b; padding: 20px; border-radius: 5px; font-family: monospace; line-height: 1.6;'>🔴 Database Connection Failed: " . $errorMessage . $suggestion . "</pre>");
-    }
+    // لا نوقف التنفيذ هنا، فقط نسجل الخطأ ونترك الملفات الأخرى تتعامل مع كون $pdo فارغاً.
+    // سيتم التعامل مع عرض الخطأ في الواجهة في الملفات التي تستدعي هذا الإعداد.
+    $pdo = null;
+    $db_connection_error = $e->getMessage(); // تخزين رسالة الخطأ الفعلية
 }
 
 // تم الاتصال بنجاح ويمكن لبقية كود المشروع استخدام كائن $pdo الآن!

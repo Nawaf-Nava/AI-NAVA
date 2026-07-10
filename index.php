@@ -177,6 +177,20 @@ if (empty($_SESSION['csrf_token'])) {
             <div id="history-list" class="history-content"></div>
         </aside>
 
+        <!-- واجهة المحادثة المباشرة (Live Mode) -->
+        <div id="live-visualizer">
+            <div class="central-core">
+                <div class="core-pulse-ring"></div>
+                <div class="core-pulse-ring"></div>
+                <div class="core-pulse-ring"></div>
+                <div class="frequency-wave"></div>
+                <div class="frequency-wave"></div>
+                <div class="frequency-wave"></div>
+                <div class="bot-avatar-frame" style="width: 150px !important; height: 150px !important;"><img src="images/icons/nava-normal.png" alt="NAVA Core" id="live-avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></div>
+            </div>
+            <p id="live-status-text" style="margin-top: 30px; font-family: var(--font-code); font-size: 1rem; color: var(--cyber-cyan); letter-spacing: 2px;">SYSTEM_LISTENING...</p>
+        </div>
+
         <section id="welcome-hero" class="welcome-hero">
             <div class="hero-header">
                 <!-- أيقونة النواة المركزية للترحيب -->
@@ -254,71 +268,6 @@ if (empty($_SESSION['csrf_token'])) {
         </footer>
 
         <div id="overlay" class="overlay"></div>
-        <div id="profile-modal" class="modal" style="max-height: 85vh; overflow-y: auto;">
-            <div class="modal-header" style="padding:15px; border-bottom:1px solid #111; display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:var(--cyber-cyan); font-size:0.7rem; font-family:monospace;">[ NODE_IDENTITY_CARD ]</span>
-                <i class="fa-solid fa-xmark" id="close-modal" style="cursor:pointer; color:#fff;"></i>
-            </div>
-            <div class="modal-body" style="padding: 20px;">
-                <!-- عرض البيانات -->
-                <div id="profile-view-mode" style="text-align:center;">
-                    <img src="<?php echo htmlspecialchars($profile_img); ?>" style="width: 85px; height: 85px; border-radius: 50%; border: 2px solid var(--cyber-cyan); margin-bottom: 12px; object-fit: cover; box-shadow: 0 0 15px var(--cyan-transparent);" alt="Avatar" onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';">
-                    <h3 style="color:#fff; margin:5px 0; font-family: var(--font-main);"><?php echo htmlspecialchars($username); ?></h3>
-                    <p style="color: #666; font-size:0.7rem; font-family: var(--font-code); margin-bottom:10px;">[ ID: <?php echo $user_id; ?> ]</p>
-                    <p style="color: #ccc; font-size:0.9rem; font-style: italic; margin-bottom: 20px;">"<?php echo htmlspecialchars($bio ?: 'لا توجد سيرة ذاتية حالياً...'); ?>"</p>
-                    
-                    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 25px;">
-                        <button onclick="document.getElementById('profile-view-mode').style.display='none'; document.getElementById('profile-edit-mode').style.display='block';" style="background: var(--cyan-transparent); border: 1px solid var(--cyber-cyan); color: var(--cyber-cyan); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">
-                            <i class="fa-solid fa-user-pen"></i> تعديل
-                        </button>
-                        <a href="logout.php" style="background: rgba(255,49,49,0.1); border: 1px solid var(--neon-red); color: var(--neon-red); text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 0.8rem;">
-                            <i class="fa-solid fa-power-off"></i> خروج
-                        </a>
-                    </div>
-                </div>
-
-                <!-- وضع التعديل (مخفي افتراضياً) -->
-                <div id="profile-edit-mode" style="display: none;">
-                    <form action="update_profile.php" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                        <div style="margin-bottom: 15px;">
-                            <label style="display:block; font-size:0.75rem; color:var(--cyber-cyan); margin-bottom:5px;">[ اسم المستخدم ]</label>
-                            <input type="text" name="username" value="<?php echo htmlspecialchars($username); ?>" style="width:100%; background:#161b22; border:1px solid #30363d; color:#fff; padding:10px; border-radius:8px;">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display:block; font-size:0.75rem; color:var(--cyber-cyan); margin-bottom:5px;">[ السيرة الذاتية ]</label>
-                            <div style="display:flex; gap:8px;">
-                                <textarea name="bio" rows="2" style="flex:1; background:#161b22; border:1px solid #30363d; color:#fff; padding:10px; border-radius:8px; resize:none;"><?php echo htmlspecialchars($bio); ?></textarea>
-                                <button type="submit" name="clear_field" value="bio" style="background:rgba(255,49,49,0.1); border:1px solid var(--neon-red); color:var(--neon-red); padding:0 12px; border-radius:8px;" title="حذف السيرة"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display:block; font-size:0.75rem; color:var(--cyber-cyan); margin-bottom:5px;">[ الصورة الشخصية ]</label>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="file" name="profile_pic" accept="image/*" style="flex:1; font-size:0.7rem; color:#888;">
-                                <button type="submit" name="clear_field" value="avatar" style="background:rgba(255,49,49,0.1); border:1px solid var(--neon-red); color:var(--neon-red); padding:8px 12px; border-radius:8px;" title="حذف الصورة"><i class="fa-solid fa-image-slash"></i></button>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 20px; border-top: 1px solid #222; padding-top: 15px;">
-                            <label style="display:block; font-size:0.75rem; color:var(--neon-gold); margin-bottom:5px;">[ تغيير كلمة المرور ]</label>
-                            <input type="password" name="current_password" placeholder="كلمة المرور الحالية" style="width:100%; background:#161b22; border:1px solid #30363d; color:#fff; padding:10px; border-radius:8px; margin-bottom:8px;">
-                            <input type="password" name="new_password" placeholder="كلمة المرور الجديدة" style="width:100%; background:#161b22; border:1px solid #30363d; color:#fff; padding:10px; border-radius:8px;">
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <button type="submit" style="flex:1; background:var(--cyber-cyan); color:#000; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">حفظ التغييرات</button>
-                            <button type="button" onclick="document.getElementById('profile-edit-mode').style.display='none'; document.getElementById('profile-view-mode').style.display='block';" style="background:transparent; border:1px solid #444; color:#888; padding:10px; border-radius:8px; cursor:pointer;">إلغاء</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- زر الحذف النهائي -->
-                <div style="margin-top: 25px; border-top: 1px solid #222; padding-top: 20px; text-align: center;">
-                    <button onclick="if(confirm('⚠️ تحذير: هل أنت متأكد من حذف الحساب نهائياً؟')) window.location.href='delete_account.php';" style="background: transparent; border: none; color: #555; font-size: 0.75rem; cursor: pointer; text-decoration: underline;">
-                       ازاله الحساب
-                    </button>
-                </div>
-            </div>
-        </div>
     </main>
     
     <script>

@@ -52,6 +52,8 @@ const DOM = {
     liveModeBtn: document.getElementById('live-mode-btn'),
     voiceInputBar: document.getElementById('voice-input-bar'),
     modalClose: document.getElementById('close-modal'),
+    liveVisualizer: document.getElementById('live-visualizer'), // New
+    liveStatusText: document.getElementById('live-status-text'), // New
 
     refresh() {
         this.chat = document.getElementById('chat-container');
@@ -83,6 +85,8 @@ const DOM = {
         this.liveModeBtn = document.getElementById('live-mode-btn');
         this.voiceInputBar = document.getElementById('voice-input-bar');
         this.modalClose = document.getElementById('close-modal');
+        this.liveVisualizer = document.getElementById('live-visualizer'); // New
+        this.liveStatusText = document.getElementById('live-status-text'); // New
     },
 
     validate() {
@@ -454,18 +458,17 @@ const VoiceEngine = {
         const selectedVoice = isDeep ? arabicMaleVoice : arabicFemaleVoice;
 
         const speakNext = () => {
-            // تحديث النص في واجهة LIVE أثناء التحدث
-            const statusText = document.getElementById('live-status-text');
-            if (document.body.classList.contains('live-active') && statusText) {
-                statusText.innerText = "NAVA_SPEAKING...";
-                statusText.style.color = "var(--neon-green)";
+            // تحديث النص في واجهة LIVE أثناء التحدث (Using DOM object)
+            if (document.body.classList.contains('live-active') && DOM.liveStatusText) {
+                DOM.liveStatusText.innerText = "NAVA_SPEAKING...";
+                DOM.liveStatusText.style.color = "var(--neon-green)";
                 document.body.classList.add('live-speaking');
             }
 
             if (currentIdx >= sentences.length) {
-                if (document.body.classList.contains('live-active') && statusText) {
-                    statusText.innerText = "SYSTEM_LISTENING...";
-                    statusText.style.color = "var(--cyber-cyan)";
+                if (document.body.classList.contains('live-active') && DOM.liveStatusText) {
+                    DOM.liveStatusText.innerText = "SYSTEM_LISTENING...";
+                    DOM.liveStatusText.style.color = "var(--cyber-cyan)";
                     document.body.classList.remove('live-speaking');
                     setTimeout(() => startVoiceRecognition(), 500); // العودة للاستماع تلقائياً
                 }
@@ -509,14 +512,13 @@ const VoiceEngine = {
 // دالة التحكم في وضع LIVE
 function toggleLiveMode() {
     const isActive = document.body.classList.toggle('live-active');
-    const statusBtn = document.getElementById('live-mode-btn');
     
     if (isActive) {
-        statusBtn.classList.add('active-live');
+        DOM.liveModeBtn.classList.add('active-live');
         Utils.showNotification("تم تفعيل وضع المحادثة المباشرة", "info");
         startVoiceRecognition();
     } else {
-        statusBtn.classList.remove('active-live');
+        DOM.liveModeBtn.classList.remove('active-live');
         VoiceEngine.stop();
         if (chatState.isRecording) speechRecognition.stop();
     }
@@ -607,34 +609,47 @@ async function fileToBase64(file) {
 
 /* --- [6] مزامنة استرجاع السجلات (Historical Synchronization) --- */
 async function loadHistoryFromServer() {
-    if (!chatState.sessionId || chatState.sessionId === 'GUEST_SESSION') return;
+    if (!chatState.sessionId || chatState.sessionId === 'GUEST_SESSION') {
+        console.warn("[NAVA_SYNC]: Aborted. No valid session ID.");
+        return;
+    }
 
+    // [إصلاح] 1. تجهيز الواجهة للتحميل (إخفاء الترحيب، إظهار المحادثة مع مؤشر التحميل)
+    DOM.refresh();
+    if (DOM.welcomeHero) DOM.welcomeHero.style.display = 'none';
+    if (DOM.chat) {
+        DOM.chat.style.display = 'block';
+        DOM.chat.innerHTML = `<div class="sync-loader" style="padding: 20px; text-align: center; color: var(--cyber-cyan); font-size: 0.75rem; font-family: monospace;"><i class="fa-solid fa-sync fa-spin"></i> SYNCING_NODE...</div>`;
+    }
+    Utils.scrollBottom();
+    
     try {
+        // 2. جلب بيانات المحادثة من الخادم
         const response = await fetch(`${CONFIG.MESSAGES_URL}?session_id=${encodeURIComponent(chatState.sessionId)}`);
         if (!response.ok) throw new Error("Network response was not ok");
-        
-        const data = await response.json();
-        
-        if (data.status === 'success' && Array.isArray(data.history)) {
-            DOM.refresh();
-            if (DOM.chat) DOM.chat.innerHTML = ""; // تنظيف اللودر
 
+        const data = await response.json();
+
+        if (data.status === 'success' && Array.isArray(data.history)) {
+            // 3. تنظيف مؤشر التحميل
+            if (DOM.chat) DOM.chat.innerHTML = ""; 
+
+            // 4. عرض الرسائل المسترجعة
             chatState.history = data.history;
             if (chatState.history.length > 0) {
                 chatState.history.forEach(msg => {
                     const role = (msg.role === 'model' || msg.role === 'assistant') ? 'bot' : 'user';
-                    renderMessage(role, msg.content, false); 
+                    renderMessage(role, msg.content, false);
                 });
-                setTimeout(() => Utils.scrollBottom(), 100);
+                setTimeout(() => Utils.scrollBottom(), 100); // التمرير للأسفل بعد العرض
             } else {
-                // في حال كانت العقدة فارغة، نتأكد من بقاء شاشة الترحيب نشطة
-                if (DOM.welcomeHero) DOM.welcomeHero.style.display = 'flex';
-                if (DOM.chat) DOM.chat.style.display = 'none';
+                // إذا كانت المحادثة فارغة، فالواجهة نظيفة وجاهزة
+                console.log(`[NAVA_SYNC]: Loaded an empty chat node.`);
             }
             console.log(`[NAVA_SYNC]: ${chatState.history.length} segments loaded.`);
         }
     } catch (error) {
-        if (DOM.chat) DOM.chat.innerHTML = `<div class="error-node">⚠️ [RESTORATION_FAILED]: تعذر الاتصال بالخزنة.</div>`;
+        if (DOM.chat) DOM.chat.innerHTML = `<div class="error-node">⚠️ [RESTORATION_FAILED]: ${error.message}</div>`;
         console.warn("[NAVA_SYNC_PENDING]:", error);
     }
 }
@@ -1122,7 +1137,7 @@ async function bootstrap() {
 
     // ربط زر LIVE
     if (DOM.liveModeBtn) {
-        DOM.liveModeBtn.onclick = (e) => { e.preventDefault(); window.location.href = 'live_mode.php'; };
+        DOM.liveModeBtn.onclick = (e) => { e.preventDefault(); toggleLiveMode(); };
     }
 
     DOM.input?.addEventListener('keydown', (e) => {
@@ -1225,8 +1240,11 @@ async function bootstrap() {
     });
 
     // تبديل النافذة المنبثقة للملف الشخصي (Profile Modal)
-    if (DOM.profileTrigger) {
-        DOM.profileTrigger.style.display = 'none'; // تعطيل الزر لأنه لم يعد متوافقاً
+    // [إصلاح] إعادة تفعيل زر الملف الشخصي وربطه بصفحة profile.php
+    if (DOM.profileTrigger && typeof IS_LOGGED_IN !== 'undefined' && IS_LOGGED_IN) {
+        DOM.profileTrigger.addEventListener('click', () => {
+            window.location.href = 'profile.php';
+        });
     }
 
     if (DOM.overlay) {
@@ -1476,10 +1494,10 @@ async function loadHistoryToSidebar() {
             if (titleTarget || restoreTarget) {
                 const sID = (titleTarget || restoreTarget).getAttribute('data-session-id');
                 console.log(`[SYSTEM]: Switching context to node: ${sID}`);
-                chatState.sessionId = parseInt(sID, 10); // تحويل المعرف إلى رقم
+                chatState.sessionId = parseInt(sID, 10);
                 sessionStorage.setItem(CONFIG.STORAGE_KEY, sID);
                 
-                loadHistoryFromServer(); // استدعاء فوري بدون تحديث الصفحة
+                loadHistoryFromServer(); // استدعاء الدالة الموحدة التي تعالج كل شيء
                 if (DOM.sidebar) DOM.sidebar.classList.remove('active');
             } else if (deleteTarget) {
                 const sID = deleteTarget.getAttribute('data-session-id'); 

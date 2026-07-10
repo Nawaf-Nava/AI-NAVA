@@ -174,13 +174,11 @@ html, body {
 }
 
 .profile-trigger img {
-    width: 38px !important;
-    height: 38px !important;
+    width: 100% !important;
+    height: 100% !important;
     object-fit: cover;
     display: block;
     border-radius: 50%;
-    position: absolute;
-    z-index: 5;
 }
 
 .profile-trigger:hover {
